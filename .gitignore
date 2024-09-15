@@ -1,0 +1,12 @@
+# Virtual Environment
+venv/
+
+# Flask instance files
+*.pyc
+__pycache__/
+
+# Environment Variables
+.env
+
+# Database files
+*.db
