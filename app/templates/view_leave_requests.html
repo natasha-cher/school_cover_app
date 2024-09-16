@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}View Leave Requests - School Management{% endblock %}
+
+{% block content %}
+<h2>Leave Requests</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Teacher</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Comment</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for request in leave_requests %}
+        <tr>
+            <td>{{ request.teacher.name }}</td>
+            <td>{{ request.start_date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ request.end_date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ request.reason }}</td>
+            <td>{{ request.status }}</td>
+            <td>{{ request.comment }}</td>  <!-- Display the comment -->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

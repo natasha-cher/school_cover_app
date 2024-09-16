@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Leave Request - School Management{% endblock %}
+
+{% block content %}
+<h2>Leave Request Form</h2>
+<form action="{{ url_for('leave_request') }}" method="post">
+    <label for="teacher_id">Teacher:</label>
+    <select id="teacher_id" name="teacher_id" required>
+        {% for teacher in teachers %}
+        <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="start_date">Start Date:</label>
+    <input type="date" id="start_date" name="start_date" required>
+    <br>
+    <label for="end_date">End Date:</label>
+    <input type="date" id="end_date" name="end_date" required>
+    <br>
+    <label for="reason">Reason:</label>
+    <select id="reason" name="reason" required>
+        <option value="personal">Personal</option>
+        <option value="illness">Illness</option>
+        <option value="field_trip">Field Trip</option>
+        <option value="professional_development">Professional Development</option>
+    </select>
+    <br>
+    <label for="comment">Comment:</label>
+    <textarea id="comment" name="comment" rows="4" cols="50" placeholder="Add any additional comments here..."></textarea>
+    <br>
+    <input type="submit" value="Submit Leave Request">
+</form>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul class="flash-messages">
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+{% endblock %}

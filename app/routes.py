@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash
 from app import app, db
-from app.models import Teacher, LeaveRequest, CoverAssignment, Schedule, SchoolClass
+from app.models import Teacher, LeaveRequest, CoverAssignment, Schedule, Class
 from datetime import datetime
 
 
@@ -25,8 +25,9 @@ def leave_request():
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
         reason = request.form.get('reason')
+        comment = request.form.get('comment')
 
-        if not (teacher_id and start_date and end_date):
+        if not (teacher_id and start_date and end_date and reason):
             flash('All fields are required.')
             return redirect(url_for('leave_request'))
 
@@ -42,7 +43,8 @@ def leave_request():
             start_date=start_date,
             end_date=end_date,
             reason=reason,
-            status='pending'  # Default status
+            status='pending',  # Default status
+            comment=comment  # Store the comment
         )
         db.session.add(leave)
         db.session.commit()

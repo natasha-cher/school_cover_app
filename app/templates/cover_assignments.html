@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Cover - School Management{% endblock %}
+
+{% block content %}
+<h2>Assign Cover</h2>
+<form action="{{ url_for('assign_cover') }}" method="post">
+    <label for="leave_request_id">Leave Request:</label>
+    <select id="leave_request_id" name="leave_request_id" required>
+        {% for request in leave_requests %}
+        <option value="{{ request.id }}">{{ request.reason }} ({{ request.start_date }} to {{ request.end_date }})</option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="covering_teacher_id">Covering Teacher:</label>
+    <select id="covering_teacher_id" name="covering_teacher_id" required>
+        {% for teacher in teachers %}
+        <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <input type="submit" value="Assign Cover">
+</form>
+{% endblock %}

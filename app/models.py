@@ -50,6 +50,7 @@ class LeaveRequest(db.Model):
     end_date = db.Column(db.Date, nullable=False)
     reason = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), nullable=False)
+    comment = db.Column(db.Text, nullable=True)
 
     # Foreign key
     teacher_id = db.Column(db.Integer, db.ForeignKey('teacher.id'), nullable=False)
