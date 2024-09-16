@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash
 from app import app, db
-from app.models import Teacher, LeaveRequest, CoverAssignment, Schedule, Class
+from app.models import Teacher, LeaveRequest, CoverAssignment, Schedule, Lesson
 from datetime import datetime
 
 

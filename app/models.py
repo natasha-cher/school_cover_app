@@ -9,6 +9,7 @@ class Teacher(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     department = db.Column(db.String(100), nullable=True)
+    image_path = db.Column(db.String(255), nullable=True)
 
     # Relationship: A teacher can have multiple leave requests
     requests = db.relationship('LeaveRequest', backref='teacher', lazy=True)
@@ -17,8 +18,8 @@ class Teacher(db.Model):
     schedules = db.relationship('Schedule', backref='teacher', lazy=True)
 
 
-class Class(db.Model):
-    __tablename__ = 'class'
+class Lesson(db.Model):
+    __tablename__ = 'lesson'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -26,7 +27,7 @@ class Class(db.Model):
     subject = db.Column(db.String(100), nullable=False)
 
     # Relationship: A class can have many schedules
-    schedules = db.relationship('Schedule', backref='class', lazy=True)
+    schedules = db.relationship('Schedule', backref='lesson', lazy=True)
 
 
 class Schedule(db.Model):
@@ -35,7 +36,7 @@ class Schedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # Foreign keys
-    class_id = db.Column(db.Integer, db.ForeignKey('class.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('teacher.id'), nullable=False)
 
     day_of_week = db.Column(db.Integer, nullable=False)  # 0 = Monday, 6 = Sunday
