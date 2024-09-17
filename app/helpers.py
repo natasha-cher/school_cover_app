@@ -26,3 +26,49 @@ def validate_dates(start_date_str, end_date_str):
         return start_date, end_date
     except ValueError:
         return None, None
+
+
+def get_absence_periods(start_date, end_date, teacher_id):
+    """
+    Get all periods for which the teacher is absent within the given date range.
+    """
+    schedules = Schedule.query.join(LeaveRequest).filter(
+        LeaveRequest.teacher_id == teacher_id,
+        LeaveRequest.start_date <= end_date,
+        LeaveRequest.end_date >= start_date
+    ).all()
+
+    periods_needed = [
+        {
+            'day_of_week': schedule.day_of_week,
+            'period_number': schedule.period_number
+        }
+        for schedule in schedules
+    ]
+
+    return periods_needed
+
+
+def find_available_teachers(periods_needed, excluded_teacher_id):
+    """
+    Find teachers who are available during the specified periods.
+    Exclude the teacher who is absent.
+    """
+    free_teachers = []
+
+    for period in periods_needed:
+        # Find teachers who do not have a schedule in the specified period
+        available_teachers = Schedule.query.filter(
+            Schedule.day_of_week == period['day_of_week'],
+            Schedule.period_number == period['period_number']
+        ).filter(Schedule.teacher_id != excluded_teacher_id).all()
+
+        # Filter out teachers who are already assigned for the period
+        available_teacher_ids = {teacher.teacher_id for teacher in available_teachers}
+
+        for teacher_id in available_teacher_ids:
+            if teacher_id not in [t.id for t in free_teachers]:
+                free_teachers.append(teacher_id)
+
+    return free_teachers
+

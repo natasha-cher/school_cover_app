@@ -1,8 +1,13 @@
 from flask import render_template, redirect, url_for, request, flash
 from app import app, db
 from app.models import Teacher, LeaveRequest, CoverAssignment, Schedule
-from app.helpers import get_leave_request_by_id, get_schedules_for_teacher, get_all_teachers, validate_dates
-from datetime import datetime
+from app.helpers import (
+    get_leave_request_by_id,
+    get_all_teachers,
+    validate_dates,
+    get_absence_periods,
+    find_available_teachers
+)
 
 
 # Home route
@@ -58,56 +63,34 @@ def leave_request():
 def assign_cover():
     if request.method == 'POST':
         leave_request_id = request.form.get('leave_request_id')
-        covering_teacher_id = request.form.get('covering_teacher_id')
-
         leave_request = get_leave_request_by_id(leave_request_id)
+
         if not leave_request:
             flash('Leave request not found.')
             return redirect(url_for('assign_cover'))
 
-        # Ensure covering_teacher_id is not the same as absent_teacher_id
-        if covering_teacher_id == str(leave_request.teacher_id):
-            flash('Covering teacher cannot be the same as the absent teacher.')
+        periods_needed = get_absence_periods(leave_request.start_date, leave_request.end_date, leave_request.teacher_id)
+        available_teachers = find_available_teachers(periods_needed, leave_request.teacher_id)
+
+        if not available_teachers:
+            flash('No available teachers for the specified periods.')
             return redirect(url_for('assign_cover'))
 
-        # Fetch all schedules for the absent teacher
-        absent_teacher_schedules = get_schedules_for_teacher(leave_request.teacher_id)
-        if not absent_teacher_schedules:
-            flash('No schedule found for the absent teacher.')
-            return redirect(url_for('assign_cover'))
+        # Assign cover assignments for each period
+        for period in periods_needed:
+            for teacher_id in available_teachers:
+                cover_assignment = CoverAssignment(
+                    absent_teacher_id=leave_request.teacher_id,
+                    covering_teacher_id=teacher_id,
+                    start_date=leave_request.start_date,
+                    end_date=leave_request.end_date,
+                    schedule_id=None  # Assign a valid schedule_id later
+                )
 
-        # Fetch or create schedules for the covering teacher
-        covering_teacher_schedules = get_schedules_for_teacher(covering_teacher_id)
-        if not covering_teacher_schedules:
-            flash('No schedule found for the covering teacher.')
-            return redirect(url_for('assign_cover'))
+                db.session.add(cover_assignment)
 
-        # Create cover assignments
-        for schedule in absent_teacher_schedules:
-            cover_assignment = CoverAssignment(
-                absent_teacher_id=leave_request.teacher_id,
-                covering_teacher_id=covering_teacher_id,
-                date=datetime.today().date(),
-                schedule_id=schedule.id
-            )
-            db.session.add(cover_assignment)
-
-            # Update the covering teacher's schedule (e.g., create new entries)
-            covering_teacher_schedule = Schedule(
-                lesson_id=schedule.lesson_id,
-                teacher_id=covering_teacher_id,
-                day_of_week=schedule.day_of_week,
-                period_number=schedule.period_number
-            )
-            db.session.add(covering_teacher_schedule)
-
-        # Update the leave request status to completed
-        leave_request.status = 'completed'
-        db.session.add(leave_request)
-
-        # Commit the transaction
         db.session.commit()
-        flash('Cover assignment completed and leave request status updated.')
+        flash('Cover assignments created successfully.')
         return redirect(url_for('index'))
 
     leave_requests = LeaveRequest.query.filter_by(status='pending').all()
