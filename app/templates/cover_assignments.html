@@ -1,24 +1,24 @@
-{% extends 'base.html' %}
-
-{% block title %}Assign Cover - School Management{% endblock %}
-
-{% block content %}
-<h2>Assign Cover</h2>
-<form action="{{ url_for('assign_cover') }}" method="post">
-    <label for="leave_request_id">Leave Request:</label>
-    <select id="leave_request_id" name="leave_request_id" required>
-        {% for request in leave_requests %}
-        <option value="{{ request.id }}">{{ request.reason }} ({{ request.start_date }} to {{ request.end_date }})</option>
-        {% endfor %}
-    </select>
-    <br>
-    <label for="covering_teacher_id">Covering Teacher:</label>
-    <select id="covering_teacher_id" name="covering_teacher_id" required>
-        {% for teacher in teachers %}
-        <option value="{{ teacher.id }}">{{ teacher.name }}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <input type="submit" value="Assign Cover">
-</form>
-{% endblock %}
+<h1>Cover Assignments</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Absent Teacher</th>
+                <th>Covering Teacher</th>
+                <th>Date</th>
+                <th>Schedule ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in cover_assignments %}
+            <tr>
+                <td>{{ assignment.id }}</td>
+                <td>{{ assignment.absent_teacher.name }}</td>
+                <td>{{ assignment.covering_teacher.name }}</td>
+                <td>{{ assignment.date }}</td>
+                <td>{{ assignment.schedule_id }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('index') }}">Back to Home</a>

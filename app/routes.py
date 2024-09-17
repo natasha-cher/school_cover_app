@@ -120,3 +120,9 @@ def assign_cover():
 def view_leave_requests():
     leave_requests = LeaveRequest.query.all()
     return render_template('view_leave_requests.html', leave_requests=leave_requests)
+
+
+@app.route('/cover-assignments')
+def cover_assignments():
+    cover_assignments = CoverAssignment.query.all()
+    return render_template('cover_assignments.html', cover_assignments=cover_assignments)
