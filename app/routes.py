@@ -69,33 +69,55 @@ def assign_cover():
             flash('Leave request not found.')
             return redirect(url_for('assign_cover'))
 
-        periods_needed = get_absence_periods(leave_request.start_date, leave_request.end_date, leave_request.teacher_id)
-        available_teachers = find_available_teachers(periods_needed, leave_request.teacher_id)
+        periods = []
+        for i in range(len(request.form.getlist('periods[0][day_of_week]'))):
+            period = {
+                'day_of_week': request.form.get(f'periods[{i}][day_of_week]'),
+                'period_number': request.form.get(f'periods[{i}][period_number]'),
+                'date': request.form.get(f'periods[{i}][date]'),
+                'covering_teacher_id': request.form.get(f'covering_teacher_{i}')
+            }
+            periods.append(period)
 
-        if not available_teachers:
-            flash('No available teachers for the specified periods.')
-            return redirect(url_for('assign_cover'))
+        # Process each period
+        for period in periods:
+            schedule = Schedule.query.filter_by(
+                teacher_id=leave_request.teacher_id,
+                day_of_week=period['day_of_week'],
+                period_number=period['period_number']
+            ).first()
 
-        # Assign cover assignments for each period
-        for period in periods_needed:
-            for teacher_id in available_teachers:
+            if schedule:
                 cover_assignment = CoverAssignment(
                     absent_teacher_id=leave_request.teacher_id,
-                    covering_teacher_id=teacher_id,
-                    start_date=leave_request.start_date,
-                    end_date=leave_request.end_date,
-                    schedule_id=None  # Assign a valid schedule_id later
+                    covering_teacher_id=period['covering_teacher_id'],
+                    date=datetime.strptime(period['date'], '%Y-%m-%d').date(),
+                    schedule_id=schedule.id
                 )
-
                 db.session.add(cover_assignment)
 
+        leave_request.status = 'completed'
         db.session.commit()
-        flash('Cover assignments created successfully.')
+        flash('Cover assignment completed successfully.')
         return redirect(url_for('index'))
 
-    leave_requests = LeaveRequest.query.filter_by(status='pending').all()
+    leave_request_id = request.args.get('leave_request_id')
+    leave_request = get_leave_request_by_id(leave_request_id)
+
+    if not leave_request:
+        flash('Leave request not found.')
+        return redirect(url_for('index'))
+
+    periods = get_absence_periods(leave_request.start_date, leave_request.end_date, leave_request.teacher_id)
     teachers = get_all_teachers()
-    return render_template('cover_assignments.html', leave_requests=leave_requests, teachers=teachers)
+
+    # Find recommended teachers for each period
+    for period in periods:
+        available_teachers = find_available_teachers([period], leave_request.teacher_id)
+        if available_teachers:
+            period['recommended_teacher_id'] = available_teachers[0]  # Select the first available teacher
+
+    return render_template('cover_assignments.html', periods=periods, teachers=teachers, leave_request_id=leave_request_id)
 
 
 # View leave requests

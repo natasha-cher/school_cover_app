@@ -29,9 +29,6 @@ def validate_dates(start_date_str, end_date_str):
 
 
 def get_absence_periods(start_date, end_date, teacher_id):
-    """
-    Get all periods for which the teacher is absent within the given date range.
-    """
     schedules = Schedule.query.join(LeaveRequest).filter(
         LeaveRequest.teacher_id == teacher_id,
         LeaveRequest.start_date <= end_date,
@@ -50,10 +47,6 @@ def get_absence_periods(start_date, end_date, teacher_id):
 
 
 def find_available_teachers(periods_needed, excluded_teacher_id):
-    """
-    Find teachers who are available during the specified periods.
-    Exclude the teacher who is absent.
-    """
     free_teachers = []
 
     for period in periods_needed:
