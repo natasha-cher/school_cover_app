@@ -26,7 +26,7 @@ class Lesson(db.Model):
     year_group = db.Column(db.String(50), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
 
-    # Relationship: A class can have many schedules
+    # Relationship: A lesson can have many schedules
     schedules = db.relationship('Schedule', backref='lesson', lazy=True)
 
 
