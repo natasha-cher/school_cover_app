@@ -1,0 +1,5 @@
+Accepting/rejecting leave requests.
+Login.
+Cover assignment logic. Display a list of all available teachers for each period that needs cover.
+There should be an option to only request leave for a few periods.
+
