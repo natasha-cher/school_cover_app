@@ -65,8 +65,24 @@ def assign_cover():
 
 
 # View leave requests
-@app.route('/leave-requests')
-def view_leave_requests():
-    leave_requests = LeaveRequest.query.all()
-    return render_template('view_leave_requests.html', leave_requests=leave_requests)
+@app.route('/leave_requests')
+def leave_requests():
+    pending_requests = LeaveRequest.query.filter_by(status='pending').all()
+    other_requests = LeaveRequest.query.filter(LeaveRequest.status != 'pending').all()
+    return render_template('leave_requests.html', pending_requests=pending_requests, other_requests=other_requests)
 
+
+# Route to handle accept/decline action
+def handle_request(request_id):
+    leave_request = get_leave_request_by_id(request_id)
+
+    if leave_request:
+        action = request.form['action']
+        if action == 'approve':
+            leave_request.status = 'approved'
+        elif action == 'decline':
+            leave_request.status = 'declined'
+
+        db.session.commit()
+
+    return redirect(url_for('leave_requests'))
