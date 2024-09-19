@@ -17,7 +17,7 @@
     {% endwith %}
 
     <!-- Leave Request Form -->
-    <form action="{{ url_for('leave_request') }}" method="POST">
+    <form action="{{ url_for('leave_request') }}" method="POST" id="leaveRequestForm">
         <!-- Teacher Selection Dropdown -->
         <div>
             <label for="teacher_id">Teacher:</label>
@@ -47,9 +47,82 @@
             <textarea id="reason" name="reason" rows="4" required></textarea>
         </div>
 
+        <!-- Comment -->
+        <div>
+            <label for="comment">Comment:</label>
+            <textarea id="comment" name="comment" rows="4"></textarea>
+        </div>
+
+        <!-- Periods for Selected Days -->
+        <h3>Select periods for cover:</h3>
+        <div id="periods-container">
+            <p>Please select a teacher and a date range to see their TeachingSlot.</p>
+        </div>
+
         <!-- Submit Button -->
         <div>
             <button type="submit">Submit Leave Request</button>
         </div>
     </form>
+
+    <script>
+        // Function to update the periods based on selected teacher and date range
+        function updatePeriods() {
+            const teacherId = document.getElementById('teacher_id').value;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const periodsContainer = document.getElementById('periods-container');
+
+            if (teacherId && startDate && endDate) {
+                fetch('/get_teacher_TeachingSlot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ teacher_id: teacherId, start_date: startDate, end_date: endDate })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    periodsContainer.innerHTML = '';  // Clear previous content
+
+                    if (data.TeachingSlots.length) {
+                        data.TeachingSlots.forEach(dayTeachingSlot => {
+                            const dayDiv = document.createElement('div');
+                            dayDiv.innerHTML = `<strong>${dayTeachingSlot.date}</strong>`;
+                            const ul = document.createElement('ul');
+
+                            if (dayTeachingSlot.periods.length) {
+                                dayTeachingSlot.periods.forEach(period => {
+                                    const li = document.createElement('li');
+                                    li.innerHTML = `
+                                        <input type="checkbox" name="TeachingSlots" value="${period.id}">
+                                        Period: ${period.period_number} (${period.lesson_name})
+                                    `;
+                                    ul.appendChild(li);
+                                });
+                            } else {
+                                ul.innerHTML = '<li>No teaching periods for this day.</li>';
+                            }
+
+                            dayDiv.appendChild(ul);
+                            periodsContainer.appendChild(dayDiv);
+                        });
+                    } else {
+                        periodsContainer.innerHTML = '<p>No TeachingSlots available for the selected date range.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching TeachingSlot:', error);
+                    periodsContainer.innerHTML = '<p>Error fetching TeachingSlot. Please try again.</p>';
+                });
+            } else {
+                periodsContainer.innerHTML = '<p>Please select a teacher and a date range to see their TeachingSlot.</p>';
+            }
+        }
+
+        // Event listeners to update periods when selections change
+        document.getElementById('teacher_id').addEventListener('change', updatePeriods);
+        document.getElementById('start_date').addEventListener('change', updatePeriods);
+        document.getElementById('end_date').addEventListener('change', updatePeriods);
+    </script>
 {% endblock %}

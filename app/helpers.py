@@ -1,18 +1,6 @@
 from app import db
-from app.models import Teacher, LeaveRequest, Schedule
-from datetime import datetime
-
-
-def get_teacher_by_id(teacher_id):
-    return Teacher.query.get(teacher_id)
-
-
-def get_leave_request_by_id(leave_request_id):
-    return LeaveRequest.query.get(leave_request_id)
-
-
-def get_schedules_for_teacher(teacher_id):
-    return Schedule.query.filter_by(teacher_id=teacher_id).all()
+from app.models import Teacher, LeaveRequest, TeachingSlot
+from datetime import datetime, timedelta
 
 
 def get_all_teachers():
@@ -28,40 +16,29 @@ def validate_dates(start_date_str, end_date_str):
         return None, None
 
 
-def get_absence_periods(start_date, end_date, teacher_id):
-    schedules = Schedule.query.join(LeaveRequest).filter(
-        LeaveRequest.teacher_id == teacher_id,
-        LeaveRequest.start_date <= end_date,
-        LeaveRequest.end_date >= start_date
-    ).all()
-
-    periods_needed = [
-        {
-            'day_of_week': schedule.day_of_week,
-            'period_number': schedule.period_number
-        }
-        for schedule in schedules
-    ]
-
-    return periods_needed
+def get_leave_request_by_id(leave_request_id):
+    return LeaveRequest.query.get(leave_request_id)
 
 
-def find_available_teachers(periods_needed, excluded_teacher_id):
-    free_teachers = []
+def get_teacher_teaching_slots_by_date_range(teacher_id, start_date, end_date):
+    teaching_slots = []
+    current_date = start_date
 
-    for period in periods_needed:
-        # Find teachers who do not have a schedule in the specified period
-        available_teachers = Schedule.query.filter(
-            Schedule.day_of_week == period['day_of_week'],
-            Schedule.period_number == period['period_number']
-        ).filter(Schedule.teacher_id != excluded_teacher_id).all()
+    while current_date <= end_date:
+        day_of_week = current_date.weekday()  # 0 = Monday, 6 = Sunday
+        daily_teaching_slots = TeachingSlot.query.filter_by(teacher_id=teacher_id, day_of_week=day_of_week).all()
 
-        # Filter out teachers who are already assigned for the period
-        available_teacher_ids = {teacher.teacher_id for teacher in available_teachers}
+        periods = [{
+            'id': slot.id,
+            'period_number': slot.period_number,
+            'lesson_name': slot.lesson.name
+        } for slot in daily_teaching_slots]
 
-        for teacher_id in available_teacher_ids:
-            if teacher_id not in [t.id for t in free_teachers]:
-                free_teachers.append(teacher_id)
+        teaching_slots.append({
+            'date': current_date.strftime('%Y-%m-%d'),
+            'periods': periods or 'No teaching periods for this day.'
+        })
 
-    return free_teachers
+        current_date += timedelta(days=1)
 
+    return teaching_slots

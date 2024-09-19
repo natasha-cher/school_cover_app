@@ -14,8 +14,8 @@ class Teacher(db.Model):
     # Relationship: A teacher can have multiple leave requests
     requests = db.relationship('LeaveRequest', backref='teacher', lazy=True)
 
-    # Relationship: A teacher can have multiple schedules
-    schedules = db.relationship('Schedule', backref='teacher', lazy=True)
+    # Relationship: A teacher can have multiple TeachingSlots
+    teaching_slots = db.relationship('TeachingSlot', backref='teacher', lazy=True)
 
 
 class Lesson(db.Model):
@@ -26,16 +26,14 @@ class Lesson(db.Model):
     year_group = db.Column(db.String(50), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
 
-    # Relationship: A lesson can have many schedules
-    schedules = db.relationship('Schedule', backref='lesson', lazy=True)
+    # Relationship: A lesson can have many TeachingSlots
+    TeachingSlots = db.relationship('TeachingSlot', backref='lesson', lazy=True)
 
 
-class Schedule(db.Model):
-    __tablename__ = 'schedule'
+class TeachingSlot(db.Model):
+    __tablename__ = 'TeachingSlot'
 
     id = db.Column(db.Integer, primary_key=True)
-
-    # Foreign keys
     lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('teacher.id'), nullable=False)
 
@@ -67,7 +65,7 @@ class CoverAssignment(db.Model):
     date = db.Column(db.Date, nullable=False)
 
     # Foreign key
-    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)
+    teaching_slot_id = db.Column(db.Integer, db.ForeignKey('TeachingSlot.id'), nullable=False)
 
     # Relationships to access teachers easily
     absent_teacher = db.relationship('Teacher', foreign_keys=[absent_teacher_id], backref='absences')
