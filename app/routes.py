@@ -73,6 +73,8 @@ def leave_requests():
 
 
 # Route to handle accept/decline action
+
+@app.route('/handle_request/<int:request_id>', methods=['POST'])
 def handle_request(request_id):
     leave_request = get_leave_request_by_id(request_id)
 
