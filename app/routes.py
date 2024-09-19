@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash
 from app import app, db
-from app.models import Teacher, LeaveRequest, CoverAssignment, Schedule
+from app.models import Teacher, LeaveRequest, Schedule
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
@@ -9,19 +9,16 @@ from app.helpers import (
     find_available_teachers
 )
 
-
 # Home route
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 # Display all teachers
 @app.route('/teachers')
 def teachers():
     all_teachers = get_all_teachers()
     return render_template('teachers.html', teachers=all_teachers)
-
 
 # Leave request route
 @app.route('/leave-request', methods=['GET', 'POST'])
@@ -58,33 +55,39 @@ def leave_request():
     teachers = get_all_teachers()
     return render_template('leave_request.html', teachers=teachers)
 
-
-@app.route('/assign-cover', methods=['GET', 'POST'])
-def assign_cover():
-    pass
-
-
 # View leave requests
-@app.route('/leave_requests')
-def leave_requests():
+@app.route('/view_leave_requests')
+def view_leave_requests():
     pending_requests = LeaveRequest.query.filter_by(status='pending').all()
     other_requests = LeaveRequest.query.filter(LeaveRequest.status != 'pending').all()
-    return render_template('leave_requests.html', pending_requests=pending_requests, other_requests=other_requests)
-
+    return render_template('view_leave_requests.html', pending_requests=pending_requests, other_requests=other_requests)
 
 # Route to handle accept/decline action
-
 @app.route('/handle_request/<int:request_id>', methods=['POST'])
 def handle_request(request_id):
     leave_request = get_leave_request_by_id(request_id)
 
     if leave_request:
-        action = request.form['action']
+        action = request.form.get('action')
         if action == 'approve':
             leave_request.status = 'approved'
         elif action == 'decline':
             leave_request.status = 'declined'
 
         db.session.commit()
+        flash(f'Leave request {action}d successfully.')
+    else:
+        flash('Leave request not found.')
 
-    return redirect(url_for('leave_requests'))
+    return redirect(url_for('view_leave_requests'))
+
+# Assign cover route
+@app.route('/assign-cover', methods=['GET', 'POST'])
+def assign_cover():
+    if request.method == 'POST':
+        # Handle cover assignment logic here
+        pass
+
+    # Render cover assignment form
+    teachers = get_all_teachers()
+    return render_template('assign_cover.html', teachers=teachers)
