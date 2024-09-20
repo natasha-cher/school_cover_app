@@ -7,30 +7,6 @@
 <div class="container">
     <h1>Cover Assignments</h1>
 
-    <table>
-        <thead>
-        <tr>
-            <th>Absent Teacher</th>
-            <th>Covering Teacher</th>
-            <th>Date</th>
-            <th>Period Number</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for assignment in cover_assignments %}
-        <tr>
-            <td>{{ assignment.absent_teacher.name }}</td>
-            <td>{{ assignment.covering_teacher.name }}</td>
-            <td>{{ assignment.date }}</td>
-            <td>{{ assignment.teaching_slot_id }}</td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="4">No cover assignments found.</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
 
     <a href="{{ url_for('index') }}">Back to Home</a>
 </div>

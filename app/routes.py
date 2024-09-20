@@ -96,23 +96,7 @@ def assign_cover(leave_request_id):
         # Fetch periods based on the leave request
         periods = get_teaching_slots_for_leave_request(leave_request)
 
-        for period in periods:  # Ensure this returns a list of dictionaries
-            cover_teacher_id = request.form.get(f'cover_teacher_{period["period_number"]}')
-            if cover_teacher_id:
-                cover_assignment = CoverAssignment(
-                    absent_teacher_id=leave_request.teacher_id,
-                    covering_teacher_id=cover_teacher_id,
-                    date=period["date"],
-                    teaching_slot_id=period["teaching_slot_id"]  # Adjust this based on your structure
-                )
-                cover_assignments.append(cover_assignment)
-
-        if cover_assignments:
-            db.session.bulk_save_objects(cover_assignments)
-            db.session.commit()
-            flash('Cover assignments created successfully.')
-        else:
-            flash('No cover assignments were made.')
+        # steps missing here
 
         return redirect(url_for('view_leave_requests'))
 

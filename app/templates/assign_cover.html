@@ -4,25 +4,32 @@
 
 {% block content %}
 <h2>Assign Cover for Leave Request</h2>
-<h3>Leave Request for {{ leave_request.teacher.name }}</h3>
-<p>Leave Dates: {{ leave_request.start_date }} to {{ leave_request.end_date }}</p>
 
-<form method="POST">
-    {% for period in periods %}
-        <div>
-            <h4>Date: {{ period.date }}</h4> <!-- Display the date -->
-            <p>Period Number: {{ period.period_number }}</p> <!-- Display the period number -->
-            <label for="cover_teacher_{{ period.period_number }}">Select Cover Teacher:</label>
-            <select name="cover_teacher_{{ period.period_number }}" id="cover_teacher_{{ period.period_number }}">
-                <option value="">Select a teacher</option>
-                {% for teacher in available_teachers %}
-                    <option value="{{ teacher.id }}">{{ teacher.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    {% endfor %}
-    <button type="submit">Assign Cover</button>
-</form>
+<h3>Leave Dates: {{ leave_request.start_date.strftime('%B %d, %Y') }} to {{ leave_request.end_date.strftime('%B %d, %Y') }}</h3>
+
+{% for period in teaching_slots %}
+    <h4>Date: {{ period.date }}</h4>
+    <ul>
+        {% for slot in period.periods %}
+            <li>
+                Period {{ slot.period_number }} -
+                <form action="{{ url_for('assign_cover', leave_request_id=leave_request.id) }}" method="POST">
+                    <select name="cover_teacher_{{ slot.period_number }}">
+                        <option value="">Select a teacher</option>
+                        {% for teacher in available_teachers %}
+                            <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Assign Cover</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endfor %}
+
+{% if not teaching_slots %}
+    <p>No periods require cover for this leave request.</p>
+{% endif %}
 
 <a href="{{ url_for('view_leave_requests') }}">Back to Leave Requests</a>
 {% endblock %}
