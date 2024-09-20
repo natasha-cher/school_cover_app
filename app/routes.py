@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from app import app, db
-from app.models import Teacher, LeaveRequest, TeachingSlot, CoverAssignment
+from app.models import LeaveRequest, CoverAssignment
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
@@ -121,10 +121,8 @@ def assign_cover(leave_request_id):
 
         return redirect(url_for('view_leave_requests'))
 
-    # Fetch available teachers for the dropdown
     available_teachers = get_available_teachers_for_cover(leave_request)
 
-    # Fetch teaching slots needing cover
     teaching_slots = get_teaching_slots_by_date_range(
         leave_request.teacher_id, leave_request.start_date, leave_request.end_date
     )
@@ -147,5 +145,5 @@ def get_teaching_slots_for_teacher():
 
 @app.route('/view_cover_assignments')
 def view_cover_assignments():
-    cover_assignments = CoverAssignment.query.all()  # Fetch all cover assignments
-    return render_template('view_cover_assignments.html', cover_assignments=cover_assignments)
+    cover_assignments = CoverAssignment.query.all()
+    return render_template('cover_assignments.html', cover_assignments=cover_assignments)
