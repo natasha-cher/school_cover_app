@@ -5,17 +5,6 @@
 {% block content %}
 <h2>Request Leave</h2>
 
-<!-- Flash messages -->
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-<ul>
-    {% for message in messages %}
-    <li>{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
-{% endwith %}
-
 <!-- Leave Request Form -->
 <form action="{{ url_for('leave_request') }}" method="POST" id="leaveRequestForm">
     <!-- Teacher Selection Dropdown -->
@@ -43,8 +32,14 @@
 
     <!-- Reason for Leave -->
     <div>
-        <label for="reason">Reason:</label>
-        <textarea id="reason" name="reason" rows="4" required></textarea>
+        <label for="reason">Select Reason:</label>
+        <select name="reason" id="reason" required>
+            <option value="">-- Select Reason --</option>
+            <option value="Personal">Personal</option>
+            <option value="Illness">Illness</option>
+            <option value="Professional Development">Professional Development</option>
+            <option value="Field Trip">Field Trip</option>
+        </select>
     </div>
 
     <!-- Comment -->
