@@ -3,33 +3,39 @@
 {% block title %}Assign Cover{% endblock %}
 
 {% block content %}
-<h2>Assign Cover for Leave Request</h2>
+<h2>Assign Cover for {{ leave_request.teacher.name }}</h2>
+<p>Leave Dates: {{ leave_request.start_date }} to {{ leave_request.end_date }}</p>
 
-<h3>Leave Dates: {{ leave_request.start_date.strftime('%B %d, %Y') }} to {{ leave_request.end_date.strftime('%B %d, %Y') }}</h3>
+<form method="POST">
+    {% for slot in teaching_slots %}
+        <div>
+            <h4>{{ slot.date }}</h4>
+            <p>Period Number: {{ slot.period_number }}</p>
+            <p>Lesson: {{ slot.lesson_name if slot.lesson_name else 'No lesson assigned' }}</p>
+            <label for="cover_teacher_{{ slot.period_number }}">Select Cover Teacher:</label>
+            <select name="cover_teacher_{{ slot.period_number }}" id="cover_teacher_{{ slot.period_number }}">
+                <option value="">-- Select Teacher --</option>
+                {% for teacher in available_teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <hr>
+    {% endfor %}
+    <button type="submit">Assign Covers</button>
+</form>
 
-{% for period in teaching_slots %}
-    <h4>Date: {{ period.date }}</h4>
-    <ul>
-        {% for slot in period.periods %}
-            <li>
-                Period {{ slot.period_number }} -
-                <form action="{{ url_for('assign_cover', leave_request_id=leave_request.id) }}" method="POST">
-                    <select name="cover_teacher_{{ slot.period_number }}">
-                        <option value="">Select a teacher</option>
-                        {% for teacher in available_teachers %}
-                            <option value="{{ teacher.id }}">{{ teacher.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit">Assign Cover</button>
-                </form>
-            </li>
-        {% endfor %}
-    </ul>
-{% endfor %}
-
-{% if not teaching_slots %}
-    <p>No periods require cover for this leave request.</p>
+{% if get_flashed_messages() %}
+    <div>
+        {% with messages=get_flashed_messages() %}
+            {% if messages %}
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </div>
 {% endif %}
-
-<a href="{{ url_for('view_leave_requests') }}">Back to Leave Requests</a>
 {% endblock %}

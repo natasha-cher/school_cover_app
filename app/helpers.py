@@ -28,16 +28,8 @@ def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
         day_of_week = current_date.weekday()  # 0 = Monday, 6 = Sunday
         daily_teaching_slots = TeachingSlot.query.filter_by(teacher_id=teacher_id, day_of_week=day_of_week).all()
 
-        periods = [{
-            'id': slot.id,
-            'period_number': slot.period_number,
-            'lesson_name': slot.lesson.name
-        } for slot in daily_teaching_slots]
-
-        teaching_slots.append({
-            'date': current_date.strftime('%Y-%m-%d'),
-            'periods': periods
-        })
+        # Accumulate teaching slots for this date
+        teaching_slots.extend(daily_teaching_slots)
 
         current_date += timedelta(days=1)
 
