@@ -6,7 +6,8 @@ from app.helpers import (
     get_all_teachers,
     validate_dates,
     get_teaching_slots_by_date_range,
-    get_available_teachers_for_cover
+    get_available_teachers_for_cover,
+    get_teaching_slots_for_leave_request
 )
 from datetime import datetime
 
@@ -90,53 +91,39 @@ def assign_cover(leave_request_id):
     leave_request = get_leave_request_by_id(leave_request_id)
 
     if request.method == 'POST':
-        # Loop through each period and create CoverAssignments
-        periods = get_teaching_slots_by_date_range(
-            leave_request.teacher_id,
-            leave_request.start_date,
-            leave_request.end_date
-        )
+        cover_assignments = []
 
-        for slot in periods:
-            for period in slot['periods']:
-                # Get the selected teacher for this period
-                cover_teacher_id = request.form.get(f'cover_teacher_{period["period_number"]}')
-                if cover_teacher_id:
-                    cover_assignment = CoverAssignment(
-                        absent_teacher_id=leave_request.teacher_id,
-                        covering_teacher_id=cover_teacher_id,
-                        date=slot['date'],
-                        teaching_slot_id=period['id']
-                    )
-                    db.session.add(cover_assignment)
+        # Fetch periods based on the leave request
+        periods = get_teaching_slots_for_leave_request(leave_request)
 
-        db.session.commit()  # Save all cover assignments to the database
-        flash('Cover assignments created successfully.')
-        return redirect(url_for('view_leave_requests'))  # Redirect to the requests view
+        for period in periods:  # Ensure this returns a list of dictionaries
+            cover_teacher_id = request.form.get(f'cover_teacher_{period["period_number"]}')
+            if cover_teacher_id:
+                cover_assignment = CoverAssignment(
+                    absent_teacher_id=leave_request.teacher_id,
+                    covering_teacher_id=cover_teacher_id,
+                    date=period["date"],
+                    teaching_slot_id=period["teaching_slot_id"]  # Adjust this based on your structure
+                )
+                cover_assignments.append(cover_assignment)
 
-    # Get available teachers for cover
-    available_teachers = get_available_teachers_for_cover(leave_request)
+        if cover_assignments:
+            db.session.bulk_save_objects(cover_assignments)
+            db.session.commit()
+            flash('Cover assignments created successfully.')
+        else:
+            flash('No cover assignments were made.')
 
-    # Get teaching slots during the leave period
-    teaching_slots = get_teaching_slots_by_date_range(
-        leave_request.teacher_id,
-        leave_request.start_date,
-        leave_request.end_date
-    )
+        return redirect(url_for('view_leave_requests'))
 
-    # Create a list of periods that need cover
-    periods = []
-    for slot in teaching_slots:
-        for period in slot['periods']:
-            periods.append({
-                'number': period['period_number'],
-                'teaching_slot_id': period['id'],
-                'date': slot['date']
-            })
+    # Fetch available teachers for the dropdown
+    available_teachers = get_all_teachers()
 
-    # Pass the leave request, available teachers, and periods to the template
-    return render_template('assign_cover.html', leave_request=leave_request, available_teachers=available_teachers,
-                           periods=periods)
+    # Logic to display periods needing cover
+    periods = get_teaching_slots_for_leave_request(leave_request)
+
+    return render_template('assign_cover.html', leave_request=leave_request, periods=periods,
+                           available_teachers=available_teachers)
 
 
 # Get teaching slots for leave request
