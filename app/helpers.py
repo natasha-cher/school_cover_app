@@ -62,12 +62,3 @@ def get_available_teachers_for_cover(leave_request):
 
     return available_teachers
 
-
-def get_teaching_slots_for_leave_request(leave_request):
-    # Assuming you have access to the Teacher and TeachingSlot models
-    start_date = leave_request.start_date
-    end_date = leave_request.end_date
-    teacher_id = leave_request.teacher_id
-
-    # Get teaching slots for the teacher during the leave dates
-    return get_teaching_slots_by_date_range(teacher_id, start_date, end_date)

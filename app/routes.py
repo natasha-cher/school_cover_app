@@ -7,7 +7,6 @@ from app.helpers import (
     validate_dates,
     get_teaching_slots_by_date_range,
     get_available_teachers_for_cover,
-    get_teaching_slots_for_leave_request
 )
 from datetime import datetime
 
@@ -89,22 +88,40 @@ def handle_request(request_id):
 @app.route('/assign-cover/<int:leave_request_id>', methods=['GET', 'POST'])
 def assign_cover(leave_request_id):
     leave_request = get_leave_request_by_id(leave_request_id)
+    if not leave_request:
+        flash('Leave request not found.')
+        return redirect(url_for('view_leave_requests'))
 
     if request.method == 'POST':
         cover_assignments = []
-
-        # Fetch periods based on the leave request
         periods = get_teaching_slots_for_leave_request(leave_request)
 
-        # steps missing here
+        for period in periods:
+            cover_teacher_id = request.form.get(f'cover_teacher_{period["period_number"]}')
+            if cover_teacher_id:
+                cover_assignment = CoverAssignment(
+                    absent_teacher_id=leave_request.teacher_id,
+                    covering_teacher_id=cover_teacher_id,
+                    date=period['date'],
+                    teaching_slot_id=period['id']
+                )
+                cover_assignments.append(cover_assignment)
+
+        if cover_assignments:
+            db.session.bulk_save_objects(cover_assignments)
+            db.session.commit()
+            flash('Cover assignments created successfully.')
+        else:
+            flash('No cover assignments were made. Please select teachers for the periods.')
 
         return redirect(url_for('view_leave_requests'))
 
     # Fetch available teachers for the dropdown
-    available_teachers = get_all_teachers()
+    available_teachers = get_available_teachers_for_cover(leave_request)
 
     # Logic to display periods needing cover
-    periods = get_teaching_slots_for_leave_request(leave_request)
+    periods = get_teaching_slots_by_date_range(leave_request.teacher_id, leave_request.start_date,
+                                               leave_request.end_date)
 
     return render_template('assign_cover.html', leave_request=leave_request, periods=periods,
                            available_teachers=available_teachers)
