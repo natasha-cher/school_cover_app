@@ -94,7 +94,8 @@ def assign_cover(leave_request_id):
 
     if request.method == 'POST':
         cover_assignments = []
-        periods = get_teaching_slots_for_leave_request(leave_request)
+        periods = get_teaching_slots_by_date_range(leave_request.teacher_id, leave_request.start_date,
+                                                   leave_request.end_date)
 
         for period in periods:
             cover_teacher_id = request.form.get(f'cover_teacher_{period["period_number"]}')

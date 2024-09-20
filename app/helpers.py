@@ -54,10 +54,11 @@ def get_available_teachers_for_cover(leave_request):
 
     # Check each teacher for availability during the leave period
     for teacher in all_teachers:
+        # Fetch teaching slots for the teacher during the leave period
         teaching_slots = get_teaching_slots_by_date_range(teacher.id, start_date, end_date)
 
         # If the teacher has no teaching slots during the leave dates, they are available
-        if not any(slot['periods'] for slot in teaching_slots):
+        if not teaching_slots:
             available_teachers.append(teacher)
 
     return available_teachers
