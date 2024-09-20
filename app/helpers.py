@@ -20,7 +20,7 @@ def get_leave_request_by_id(leave_request_id):
     return LeaveRequest.query.get(leave_request_id)
 
 
-def get_teacher_teaching_slots_by_date_range(teacher_id, start_date, end_date):
+def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
     teaching_slots = []
     current_date = start_date
 
@@ -42,3 +42,27 @@ def get_teacher_teaching_slots_by_date_range(teacher_id, start_date, end_date):
         current_date += timedelta(days=1)
 
     return teaching_slots
+
+
+def get_available_teachers_for_cover(leave_request):
+    start_date = leave_request.start_date
+    end_date = leave_request.end_date
+    available_teachers = []
+
+    # Get all teachers
+    all_teachers = get_all_teachers()
+
+    # Loop through each teacher and check their availability
+    for teacher in all_teachers:
+        # Check if this teacher has teaching slots during the leave period
+        teaching_slots = TeachingSlot.query.filter(
+            TeachingSlot.teacher_id == teacher.id,
+            TeachingSlot.day_of_week.in_([start_date.weekday(), end_date.weekday()])
+        ).filter(
+            TeachingSlot.period_number.in_(range(1, number_of_periods_per_day + 1))
+        ).all()
+
+        if not teaching_slots:
+            available_teachers.append(teacher)
+
+    return available_teachers

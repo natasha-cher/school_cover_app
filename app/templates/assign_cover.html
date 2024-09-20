@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Request Leave{% endblock %}
+
+{% block content %}
+<h2>Assign Cover</h2>
+
+<div class="container">
+    <h1>Assign Cover for {{ leave_request.teacher.name }}</h1>
+    <p>Leave Dates: {{ leave_request.start_date }} to {{ leave_request.end_date }}</p>
+
+    <form method="POST">
+        <h3>Select Cover Teachers for Each Period</h3>
+
+        {% for period in periods %}
+        <div class="period">
+            <label>Period {{ period.number }} on {{ period.date }}:</label>
+            <select name="cover_teacher_{{ period.number }}">
+                <option value="">Select a teacher</option>
+                {% for teacher in available_teachers %}
+                <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endfor %}
+
+        <button type="submit">Confirm Assignment</button>
+    </form>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class="flashes">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+</div>
+{% endblock %}

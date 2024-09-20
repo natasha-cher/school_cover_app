@@ -3,76 +3,79 @@
 {% block title %}Leave Requests{% endblock %}
 
 {% block content %}
-    <h2>Pending Leave Requests</h2>
-    <div class="pending-section">
-        <table>
-            <thead>
+<h2>Pending Leave Requests</h2>
+<div class="pending-section">
+    <table>
+        <thead>
+            <tr>
+                <th>Teacher</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Reason</th>
+                <th>Comment</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if pending_requests %}
+                {% for request in pending_requests %}
                 <tr>
-                    <th>Teacher</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Reason</th>
-                    <th>Action</th>
-                    <th>Comment</th>
+                    <td>{{ request.teacher.name }}</td>
+                    <td>{{ request.start_date }}</td>
+                    <td>{{ request.end_date }}</td>
+                    <td>{{ request.reason }}</td>
+                    <td>{{ request.comment }}</td>
+                    <td>
+                        <form action="/handle_request/{{ request.id }}" method="POST" style="display:inline;">
+                            <button type="submit" name="action" value="approve">Approve</button>
+                            <button type="submit" name="action" value="decline">Decline</button>
+                        </form>
+                        <form action="{{ url_for('assign_cover', leave_request_id=request.id) }}" method="POST" style="display:inline;">
+                            <button type="submit">Assign Cover</button>
+                        </form>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                {% if pending_requests %}
-                    {% for request in pending_requests %}
-                        <tr>
-                            <td>{{ request.teacher.name }}</td> <!-- Assuming relationship to Teacher -->
-                            <td>{{ request.start_date }}</td>
-                            <td>{{ request.end_date }}</td>
-                            <td>{{ request.reason }}</td>
-                            <td>
-                                <form action="/handle_request/{{ request.id }}" method="POST" style="display:inline;">
-                                    <button type="submit" name="action" value="approve">Approve</button>
-                                    <button type="submit" name="action" value="decline">Decline</button>
-                                    <textarea name="comment" placeholder="Add a comment" required></textarea>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="6">No pending leave requests</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6">No pending leave requests</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
 
-    <h2>Other Leave Requests</h2>
-    <div class="other-section">
-        <table>
-            <thead>
+<h2>Other Leave Requests</h2>
+<div class="other-section">
+    <table>
+        <thead>
+            <tr>
+                <th>Teacher</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Reason</th>
+                <th>Admin Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if other_requests %}
+                {% for request in other_requests %}
                 <tr>
-                    <th>Teacher</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Status</th>
-                    <th>Reason</th>
-                    <th>Admin Comment</th>
+                    <td>{{ request.teacher.name }}</td>
+                    <td>{{ request.start_date }}</td>
+                    <td>{{ request.end_date }}</td>
+                    <td>{{ request.status }}</td>
+                    <td>{{ request.reason }}</td>
+                    <td>{{ request.comment }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                {% if other_requests %}
-                    {% for request in other_requests %}
-                        <tr>
-                            <td>{{ request.teacher.name }}</td>
-                            <td>{{ request.start_date }}</td>
-                            <td>{{ request.end_date }}</td>
-                            <td>{{ request.status }}</td>
-                            <td>{{ request.reason }}</td>
-                            <td>{{ request.comment }}</td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="6">No past leave requests</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6">No past leave requests</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

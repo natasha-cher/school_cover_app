@@ -1,11 +1,12 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from app import app, db
-from app.models import Teacher, LeaveRequest, TeachingSlot
+from app.models import Teacher, LeaveRequest, TeachingSlot, CoverAssignment
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
     validate_dates,
-    get_teacher_teaching_slots_by_date_range
+    get_teaching_slots_by_date_range,
+    get_available_teachers_for_cover
 )
 from datetime import datetime
 
@@ -84,14 +85,58 @@ def handle_request(request_id):
 
 
 # Assign cover route
-@app.route('/assign-cover', methods=['GET', 'POST'])
-def assign_cover():
-    if request.method == 'POST':
-        # Handle cover assignment logic here
-        pass
+@app.route('/assign-cover/<int:leave_request_id>', methods=['GET', 'POST'])
+def assign_cover(leave_request_id):
+    leave_request = get_leave_request_by_id(leave_request_id)
 
-    teachers = get_all_teachers()
-    return render_template('assign_cover.html', teachers=teachers)
+    if request.method == 'POST':
+        # Loop through each period and create CoverAssignments
+        periods = get_teaching_slots_by_date_range(
+            leave_request.teacher_id,
+            leave_request.start_date,
+            leave_request.end_date
+        )
+
+        for slot in periods:
+            for period in slot['periods']:
+                # Get the selected teacher for this period
+                cover_teacher_id = request.form.get(f'cover_teacher_{period["period_number"]}')
+                if cover_teacher_id:
+                    cover_assignment = CoverAssignment(
+                        absent_teacher_id=leave_request.teacher_id,
+                        covering_teacher_id=cover_teacher_id,
+                        date=slot['date'],
+                        teaching_slot_id=period['id']
+                    )
+                    db.session.add(cover_assignment)
+
+        db.session.commit()  # Save all cover assignments to the database
+        flash('Cover assignments created successfully.')
+        return redirect(url_for('view_leave_requests'))  # Redirect to the requests view
+
+    # Get available teachers for cover
+    available_teachers = get_available_teachers_for_cover(leave_request)
+
+    # Get teaching slots during the leave period
+    teaching_slots = get_teaching_slots_by_date_range(
+        leave_request.teacher_id,
+        leave_request.start_date,
+        leave_request.end_date
+    )
+
+    # Create a list of periods that need cover
+    periods = []
+    for slot in teaching_slots:
+        for period in slot['periods']:
+            periods.append({
+                'number': period['period_number'],
+                'teaching_slot_id': period['id'],
+                'date': slot['date']
+            })
+
+    # Pass the leave request, available teachers, and periods to the template
+    return render_template('assign_cover.html', leave_request=leave_request, available_teachers=available_teachers,
+                           periods=periods)
 
 
 # Get teaching slots for leave request
@@ -102,5 +147,11 @@ def get_teaching_slots_for_teacher():
     start_date = datetime.strptime(data['start_date'], '%Y-%m-%d')
     end_date = datetime.strptime(data['end_date'], '%Y-%m-%d')
 
-    teaching_slots = get_teacher_teaching_slots_by_date_range(teacher_id, start_date, end_date)
+    teaching_slots = get_teaching_slots_by_date_range(teacher_id, start_date, end_date)
     return jsonify({'teaching_slots': teaching_slots})
+
+
+@app.route('/view_cover_assignments')
+def view_cover_assignments():
+    cover_assignments = CoverAssignment.query.all()  # Fetch all cover assignments
+    return render_template('view_cover_assignments.html', cover_assignments=cover_assignments)
