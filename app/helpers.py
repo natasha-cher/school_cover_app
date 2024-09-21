@@ -48,4 +48,3 @@ def get_available_teachers_for_cover(leave_request):
             available_teachers.append(teacher)
 
     return available_teachers
-

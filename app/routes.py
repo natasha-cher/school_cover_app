@@ -24,9 +24,10 @@ def teachers():
     return render_template('teachers.html', teachers=all_teachers)
 
 
-# Leave request route
 @app.route('/leave-request', methods=['GET', 'POST'])
 def leave_request():
+    teachers = get_all_teachers()
+
     if request.method == 'POST':
         teacher_id = request.form.get('teacher_id')
         start_date = request.form.get('start_date')
@@ -34,15 +35,21 @@ def leave_request():
         reason = request.form.get('reason')
         comment = request.form.get('comment')
 
+        # Ensure all required fields are filled
         if not (teacher_id and start_date and end_date and reason and comment):
             flash('All fields are required.')
             return redirect(url_for('leave_request'))
 
+        # Validate and parse the dates
         start_date, end_date = validate_dates(start_date, end_date)
         if not start_date or not end_date:
             flash('Invalid date format. Use YYYY-MM-DD.')
             return redirect(url_for('leave_request'))
 
+        # Retrieve periods that need covering
+        periods_to_cover = get_teaching_slots_by_date_range(teacher_id, start_date, end_date)
+
+        # Create the leave request
         leave_request = LeaveRequest(
             teacher_id=teacher_id,
             start_date=start_date,
@@ -53,10 +60,12 @@ def leave_request():
         )
         db.session.add(leave_request)
         db.session.commit()
-        flash('Leave request submitted successfully.')
-        return redirect(url_for('index'))
 
-    teachers = get_all_teachers()
+        flash('Leave request submitted successfully.')
+
+        return render_template('leave_request.html', teachers=teachers, periods_to_cover=periods_to_cover)
+
+    # Handle GET request to render the form
     return render_template('leave_request.html', teachers=teachers)
 
 
@@ -129,18 +138,6 @@ def assign_cover(leave_request_id):
 
     return render_template('assign_cover.html', leave_request=leave_request,
                            teaching_slots=teaching_slots, available_teachers=available_teachers)
-
-
-# Get teaching slots for leave request
-@app.route('/get_teaching_slots', methods=['POST'])
-def get_teaching_slots_for_teacher():
-    data = request.get_json()
-    teacher_id = data['teacher_id']
-    start_date = datetime.strptime(data['start_date'], '%Y-%m-%d')
-    end_date = datetime.strptime(data['end_date'], '%Y-%m-%d')
-
-    teaching_slots = get_teaching_slots_by_date_range(teacher_id, start_date, end_date)
-    return jsonify({'teaching_slots': teaching_slots})
 
 
 @app.route('/view_cover_assignments')
