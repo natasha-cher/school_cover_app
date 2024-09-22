@@ -6,46 +6,47 @@
 <h2>Request Leave</h2>
 
 <!-- Leave Request Form -->
-<form action="{{ url_for('leave_request') }}" method="POST" id="leaveRequestForm">
+<form action="{{ url_for('leave_request') }}" method="POST" id="leaveRequestForm" class="form-horizontal">
+    {{ form.hidden_tag() }}  <!-- Include CSRF token -->
+
     <!-- Teacher Selection Dropdown -->
-    <div>
-        <label for="teacher_id">Teacher:</label>
-        <select id="teacher_id" name="teacher_id" required>
-            <option value="">Select a teacher</option>
-            {% for teacher in teachers %}
-            <option value="{{ teacher.id }}">{{ teacher.name }}</option>
-            {% endfor %}
-        </select>
+    <div class="form-group">
+        <label for="teacher_id" class="col-sm-2 control-label">Teacher:</label>
+        <div class="col-sm-10">
+            {{ form.teacher_id(class="form-control") }}
+        </div>
     </div>
 
     <!-- Start Date -->
-    <div>
-        <label for="start_date">Start Date:</label>
-        <input type="date" id="start_date" name="start_date" required>
+    <div class="form-group">
+        <label for="start_date" class="col-sm-2 control-label">Start Date:</label>
+        <div class="col-sm-10">
+            {{ form.start_date(class="form-control") }}
+        </div>
     </div>
 
     <!-- End Date -->
-    <div>
-        <label for="end_date">End Date:</label>
-        <input type="date" id="end_date" name="end_date" required>
+    <div class="form-group">
+        <label for="end_date" class="col-sm-2 control-label">End Date:</label>
+        <div class="col-sm-10">
+            {{ form.end_date(class="form-control") }}
+        </div>
     </div>
 
     <!-- Reason for Leave -->
-    <div>
-        <label for="reason">Select Reason:</label>
-        <select name="reason" id="reason" required>
-            <option value="">-- Select Reason --</option>
-            <option value="Personal">Personal</option>
-            <option value="Illness">Illness</option>
-            <option value="Professional Development">Professional Development</option>
-            <option value="Field Trip">Field Trip</option>
-        </select>
+    <div class="form-group">
+        <label for="reason" class="col-sm-2 control-label">Select Reason:</label>
+        <div class="col-sm-10">
+            {{ form.reason(class="form-control") }}
+        </div>
     </div>
 
     <!-- Comment -->
-    <div>
-        <label for="comment">Comment:</label>
-        <textarea id="comment" name="comment" rows="4"></textarea>
+    <div class="form-group">
+        <label for="comment" class="col-sm-2 control-label">Comment:</label>
+        <div class="col-sm-10">
+            {{ form.comment(class="form-control", rows=4) }}
+        </div>
     </div>
 
     <!-- Periods for Selected Days -->
@@ -55,10 +56,11 @@
     </div>
 
     <!-- Submit Button -->
-    <div>
-        <button type="submit">Submit Leave Request</button>
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
     </div>
 </form>
-
 
 {% endblock %}

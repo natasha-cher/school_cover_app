@@ -1,6 +1,7 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from app import app, db
-from app.models import LeaveRequest, CoverAssignment
+from app.models import LeaveRequest, CoverAssignment, Teacher
+from forms import LeaveRequestForm, CoverAssignmentForm
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
@@ -14,7 +15,9 @@ from datetime import datetime
 # Home route
 @app.route('/')
 def index():
-    return render_template('index.html')
+    pending_count = LeaveRequest.query.filter_by(status='pending').count()
+    total_teachers = Teacher.query.count()
+    return render_template('index.html', pending_count=pending_count, total_teachers=total_teachers)
 
 
 # Display all teachers
@@ -27,27 +30,18 @@ def teachers():
 @app.route('/leave-request', methods=['GET', 'POST'])
 def leave_request():
     teachers = get_all_teachers()
+    form = LeaveRequestForm()
 
-    if request.method == 'POST':
-        teacher_id = request.form.get('teacher_id')
-        start_date = request.form.get('start_date')
-        end_date = request.form.get('end_date')
-        reason = request.form.get('reason')
-        comment = request.form.get('comment')
+    # Populate the teacher choices for the form
+    form.teacher_id.choices = [(teacher.id, teacher.name) for teacher in teachers]
 
-        # Ensure all required fields are filled
-        if not (teacher_id and start_date and end_date and reason and comment):
-            flash('All fields are required.')
-            return redirect(url_for('leave_request'))
-
-        # Validate and parse the dates
-        start_date, end_date = validate_dates(start_date, end_date)
-        if not start_date or not end_date:
-            flash('Invalid date format. Use YYYY-MM-DD.')
-            return redirect(url_for('leave_request'))
-
-        # Retrieve periods that need covering
-        periods_to_cover = get_teaching_slots_by_date_range(teacher_id, start_date, end_date)
+    if form.validate_on_submit():
+        # Get data from the validated form
+        teacher_id = form.teacher_id.data
+        start_date = form.start_date.data
+        end_date = form.end_date.data
+        reason = form.reason.data
+        comment = form.comment.data
 
         # Create the leave request
         leave_request = LeaveRequest(
@@ -62,16 +56,16 @@ def leave_request():
         db.session.commit()
 
         flash('Leave request submitted successfully.')
+        return redirect(url_for('view_leave_requests'))
 
-        return render_template('leave_request.html', teachers=teachers, periods_to_cover=periods_to_cover)
-
-    # Handle GET request to render the form
-    return render_template('leave_request.html', teachers=teachers)
+    return render_template('leave_request.html', teachers=teachers, form=form)
 
 
 @app.route('/periods/<int:request_id>')
 def get_teaching_periods(request_id):
     leave_request = get_leave_request_by_id(request_id)
+    if not leave_request:
+        return jsonify({'error': 'Leave request not found'}), 404
     periods = get_teaching_slots_by_date_range(
         leave_request.teacher_id,
         leave_request.start_date,
@@ -95,8 +89,9 @@ def get_teaching_periods(request_id):
 @app.route('/view_leave_requests')
 def view_leave_requests():
     pending_requests = LeaveRequest.query.filter_by(status='pending').all()
-    other_requests = LeaveRequest.query.filter(LeaveRequest.status != 'pending').all()
-    return render_template('view_leave_requests.html', pending_requests=pending_requests, other_requests=other_requests)
+    approved_requests = LeaveRequest.query.filter_by(status='approved').all()
+    declined_requests = LeaveRequest.query.filter_by(status='declined').all()
+    return render_template('view_leave_requests.html', pending_requests=pending_requests, approved_requests=approved_requests, declined_requests=declined_requests)
 
 
 # Handle accept/decline action
@@ -118,51 +113,52 @@ def handle_request(request_id):
 # Assign cover route
 @app.route('/assign-cover/<int:leave_request_id>', methods=['GET', 'POST'])
 def assign_cover(leave_request_id):
+    # Retrieve the leave request by its ID
     leave_request = get_leave_request_by_id(leave_request_id)
     if not leave_request:
         flash('Leave request not found.')
         return redirect(url_for('view_leave_requests'))
 
-    if request.method == 'POST':
-        cover_assignments = []
+    # Initialize the form
+    form = CoverAssignmentForm()
 
-        # Fetch teaching slots based on the leave request
-        teaching_slots = get_teaching_slots_by_date_range(
-            leave_request.teacher_id, leave_request.start_date, leave_request.end_date
-        )
-
-        for slot in teaching_slots:
-            cover_teacher_id = request.form.get(f'cover_teacher_{slot.period_number}')
-            if cover_teacher_id:
-                cover_assignment = CoverAssignment(
-                    absent_teacher_id=leave_request.teacher_id,
-                    covering_teacher_id=cover_teacher_id,
-                    date=slot.date,
-                    teaching_slot_id=slot.id,
-                    period_number=int(slot.period_number)
-                )
-                cover_assignments.append(cover_assignment)
-
-        if cover_assignments:
-            db.session.bulk_save_objects(cover_assignments)
-            db.session.commit()
-            flash('Cover assignments created successfully.')
-        else:
-            flash('No cover assignments were made. Please select teachers for the periods.')
-
-        return redirect(url_for('view_leave_requests'))
-
+    # Fetch available teachers for cover assignments
     available_teachers = get_available_teachers_for_cover(leave_request)
 
+    # Set choices for the cover teacher select field
+    form.cover_teacher_id.choices = [(teacher.id, teacher.name) for teacher in available_teachers]
+
+    if request.method == 'POST':
+        # Validate and process the form submission
+        if form.validate_on_submit():
+            # Loop through each teaching slot and assign cover teachers
+            for slot in leave_request.teaching_slots:  # Assuming leave_request has related teaching_slots
+                cover_teacher_id = request.form.get(f'cover_teacher_{slot.period_number}')
+                if cover_teacher_id:
+                    # Logic to create or update the cover assignment in the database
+                    cover_assignment = CoverAssignment(
+                        leave_request_id=leave_request.id,
+                        teaching_slot_id=slot.id,
+                        cover_teacher_id=cover_teacher_id
+                    )
+                    db.session.add(cover_assignment)
+
+            # Commit all cover assignments to the database
+            db.session.commit()
+
+            flash('Cover assignments created successfully.')
+            return redirect(url_for('view_leave_requests'))
+
+    # Get teaching slots for the specific leave request
     teaching_slots = get_teaching_slots_by_date_range(
         leave_request.teacher_id, leave_request.start_date, leave_request.end_date
     )
 
     return render_template('assign_cover.html', leave_request=leave_request,
-                           teaching_slots=teaching_slots, available_teachers=available_teachers)
+                           teaching_slots=teaching_slots, available_teachers=available_teachers, form=form)
 
 
 @app.route('/view_cover_assignments')
 def view_cover_assignments():
     cover_assignments = CoverAssignment.query.all()
-    return render_template('cover_assignments.html', cover_assignments=cover_assignments)
+    return render_template('view_cover_assignments.html', cover_assignments=cover_assignments)

@@ -3,12 +3,30 @@
 {% block title %}Teachers{% endblock %}
 
 {% block content %}
-<h1>Teachers</h1>
-<ul>
-    {% for teacher in teachers %}
-    <li>{{ teacher.name }} ({{ teacher.email }})</li>
-    {% else %}
-    <li>No teachers available.</li>
-    {% endfor %}
-</ul>
+<div class="container mt-4">
+    <h1>Teachers</h1>
+    <div class="row">
+        {% for teacher in teachers %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ teacher.name }}</h5>
+                    <p class="card-text">{{ teacher.email }}</p>
+                    {% if teacher.image_path %}
+                        <img src="{{ url_for('static', filename=teacher.image_path) }}" class="card-img-top" alt="{{ teacher.name }}">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='default-avatar.png') }}" class="card-img-top" alt="Default Avatar">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-warning" role="alert">
+                No teachers available.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

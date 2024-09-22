@@ -1,8 +1,37 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Home - School Management{% endblock %}
+{% block title %}Home - School Management System{% endblock %}
 
 {% block content %}
-<h2>Home Page</h2>
-<p>Manage leave requests, assign cover, and more.</p>
+<div class="container">
+    <h1>Welcome to the School Management System</h1>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-header">
+                    Leave Requests
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Pending Requests</h5>
+                    <p class="card-text">{{ pending_count }} pending leave requests.</p>
+                    <a href="{{ url_for('view_leave_requests') }}" class="btn btn-primary">View Leave Requests</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-header">
+                    Teachers
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Total Teachers</h5>
+                    <p class="card-text">{{ total_teachers }} registered teachers.</p>
+                    <a href="{{ url_for('teachers') }}" class="btn btn-primary">View Teachers</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

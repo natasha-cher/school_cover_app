@@ -1,12 +1,36 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Cover Assignments {% endblock %}
+{% block title %}View Cover Assignments{% endblock %}
 
 {% block content %}
-<h2>Cover assignments</h2>
 <div class="container">
+    <h1>Cover Assignments</h1>
 
-
-    <a href="{{ url_for('index') }}">Back to Home</a>
+    {% if cover_assignments %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Absent Teacher</th>
+                    <th>Covering Teacher</th>
+                    <th>Date</th>
+                    <th>Teaching Slot</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assignment in cover_assignments %}
+                <tr>
+                    <td>{{ assignment.absent_teacher.name }}</td>
+                    <td>{{ assignment.covering_teacher.name }}</td>
+                    <td>{{ assignment.date }}</td>
+                    <td>Period {{ assignment.teaching_slot.period_number }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+            No cover assignments found.
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
