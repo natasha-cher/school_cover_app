@@ -69,6 +69,28 @@ def leave_request():
     return render_template('leave_request.html', teachers=teachers)
 
 
+@app.route('/periods/<int:request_id>')
+def get_teaching_periods(request_id):
+    leave_request = get_leave_request_by_id(request_id)
+    periods = get_teaching_slots_by_date_range(
+        leave_request.teacher_id,
+        leave_request.start_date,
+        leave_request.end_date
+    )
+    period_dict_list = []
+    for period in periods:
+        period_dict_list.append({
+            'id': period.id,
+            'lesson_id': period.lesson_id,
+            'teacher_id': period.teacher_id,
+            'day_of_week': period.day_of_week,
+            'period_number': period.period_number
+        })
+
+    # Return the periods as JSON
+    return jsonify({'periods': period_dict_list})
+
+
 # View leave requests
 @app.route('/view_leave_requests')
 def view_leave_requests():
