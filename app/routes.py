@@ -1,7 +1,8 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from app import app, db
-from app.models import LeaveRequest, CoverAssignment, Teacher
-from forms import LeaveRequestForm, CoverAssignmentForm
+from app.models import LeaveRequest, CoverAssignment, Teacher, User
+from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm
+from flask_login import login_user
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
@@ -9,7 +10,6 @@ from app.helpers import (
     get_teaching_slots_by_date_range,
     get_available_teachers_for_cover,
 )
-from datetime import datetime
 
 
 # Home route
@@ -158,7 +158,37 @@ def assign_cover(leave_request_id):
                            teaching_slots=teaching_slots, available_teachers=available_teachers, form=form)
 
 
-@app.route('/view_cover_assignments')
+@app.route('/cover_assignments')
 def view_cover_assignments():
     cover_assignments = CoverAssignment.query.all()
-    return render_template('view_cover_assignments.html', cover_assignments=cover_assignments)
+    return render_template('cover_assignments.html', cover_assignments=cover_assignments)
+
+
+@app.route('/sign_up_options')
+def choose_signup():
+    return render_template('sign_up_options.html')
+
+
+@app.route('/signup/<role>', methods=['GET', 'POST'])
+def signup(role):
+    if role not in ['teacher', 'admin']:
+        flash('Invalid role specified.')
+        return redirect(url_for('choose_signup'))
+
+    form = SignupForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is None:
+            new_user = User(email=form.email.data, role=role)
+            new_user.set_password(form.password.data)
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user)
+            flash(f'Sign up successful. You are logged in as a {role}.')
+            if role == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            else:
+                return redirect(url_for('teacher_dashboard'))
+        else:
+            flash('Email already exists. Please use a different email.')
+    return render_template('signup.html', form=form, role=role)

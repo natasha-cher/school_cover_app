@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import SelectField, DateField, TextAreaField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import SelectField, DateField, TextAreaField, SubmitField, PasswordField, StringField
+from wtforms.validators import DataRequired, Email, EqualTo
+
 
 class LeaveRequestForm(FlaskForm):
     teacher_id = SelectField('Teacher', validators=[DataRequired()])
@@ -20,3 +21,12 @@ class LeaveRequestForm(FlaskForm):
 class CoverAssignmentForm(FlaskForm):
     cover_teacher_id = SelectField('Select Cover Teacher', validators=[DataRequired()])
     submit = SubmitField('Assign Cover')
+
+
+class SignupForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired(), EqualTo('confirm', message='Passwords must match')])
+    confirm = PasswordField('Confirm Password', validators=[DataRequired()])
+    submit = SubmitField('Sign Up')
+
+

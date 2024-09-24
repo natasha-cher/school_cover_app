@@ -1,5 +1,7 @@
 # models.py
 from app import db
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class Teacher(db.Model):
@@ -70,3 +72,22 @@ class CoverAssignment(db.Model):
     # Relationships to access teachers easily
     absent_teacher = db.relationship('Teacher', foreign_keys=[absent_teacher_id], backref='absences')
     covering_teacher = db.relationship('Teacher', foreign_keys=[covering_teacher_id], backref='covers')
+
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    role = db.Column(db.String(50), nullable=False)  # 'admin' or 'teacher'
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def is_admin(self):
+        return self.role == 'admin'
+
+    def is_teacher(self):
+        return self.role == 'teacher'
