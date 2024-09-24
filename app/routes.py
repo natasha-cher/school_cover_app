@@ -165,15 +165,15 @@ def view_cover_assignments():
 
 
 @app.route('/sign_up_options')
-def choose_signup():
+def sign_up_options():
     return render_template('sign_up_options.html')
 
 
 @app.route('/signup/<role>', methods=['GET', 'POST'])
-def signup(role):
+def sign_up(role):
     if role not in ['teacher', 'admin']:
         flash('Invalid role specified.')
-        return redirect(url_for('choose_signup'))
+        return redirect(url_for('sign_up_options'))
 
     form = SignupForm()
     if form.validate_on_submit():
@@ -191,4 +191,4 @@ def signup(role):
                 return redirect(url_for('teacher_dashboard'))
         else:
             flash('Email already exists. Please use a different email.')
-    return render_template('signup.html', form=form, role=role)
+    return render_template('sign_up.html', form=form, role=role)
