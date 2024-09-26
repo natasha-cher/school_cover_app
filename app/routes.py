@@ -1,8 +1,8 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from app import app, db
 from app.models import LeaveRequest, CoverAssignment, Teacher, User
-from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm
-from flask_login import login_user
+from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginForm
+from flask_login import login_user, logout_user, current_user, login_required
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
@@ -14,6 +14,7 @@ from app.helpers import (
 
 # Home route
 @app.route('/')
+@login_required
 def index():
     pending_count = LeaveRequest.query.filter_by(status='pending').count()
     total_teachers = Teacher.query.count()
@@ -22,12 +23,14 @@ def index():
 
 # Display all teachers
 @app.route('/teachers')
+@login_required
 def teachers():
     all_teachers = get_all_teachers()
     return render_template('teachers.html', teachers=all_teachers)
 
 
 @app.route('/leave-request', methods=['GET', 'POST'])
+@login_required
 def leave_request():
     teachers = get_all_teachers()
     form = LeaveRequestForm()
@@ -62,6 +65,7 @@ def leave_request():
 
 
 @app.route('/periods/<int:request_id>')
+@login_required
 def get_teaching_periods(request_id):
     leave_request = get_leave_request_by_id(request_id)
     if not leave_request:
@@ -87,6 +91,7 @@ def get_teaching_periods(request_id):
 
 # View leave requests
 @app.route('/view_leave_requests')
+@login_required
 def view_leave_requests():
     pending_requests = LeaveRequest.query.filter_by(status='pending').all()
     approved_requests = LeaveRequest.query.filter_by(status='approved').all()
@@ -96,6 +101,7 @@ def view_leave_requests():
 
 # Handle accept/decline action
 @app.route('/handle_request/<int:request_id>', methods=['POST'])
+@login_required
 def handle_request(request_id):
     leave_request = get_leave_request_by_id(request_id)
     action = request.form.get('action')
@@ -112,6 +118,7 @@ def handle_request(request_id):
 
 # Assign cover route
 @app.route('/assign-cover/<int:leave_request_id>', methods=['GET', 'POST'])
+@login_required
 def assign_cover(leave_request_id):
     # Retrieve the leave request by its ID
     leave_request = get_leave_request_by_id(leave_request_id)
@@ -159,12 +166,14 @@ def assign_cover(leave_request_id):
 
 
 @app.route('/cover_assignments')
+@login_required
 def view_cover_assignments():
     cover_assignments = CoverAssignment.query.all()
     return render_template('cover_assignments.html', cover_assignments=cover_assignments)
 
 
 @app.route('/sign_up_options')
+@login_required
 def sign_up_options():
     return render_template('sign_up_options.html')
 
@@ -183,7 +192,7 @@ def sign_up(role):
             new_user.set_password(form.password.data)
             db.session.add(new_user)
             db.session.commit()
-            login_user(new_user)
+            # login_user(new_user)
             flash(f'Sign up successful. You are logged in as a {role}.')
             if role == 'admin':
                 return redirect(url_for('admin_dashboard'))
@@ -192,3 +201,28 @@ def sign_up(role):
         else:
             flash('Email already exists. Please use a different email.')
     return render_template('sign_up.html', form=form, role=role)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:  # If the user is already logged in
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.verify_password(form.password.data):
+            login_user(user, remember=form.remember.data)
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
+        else:
+            flash('Login failed. Check email and password.', 'danger')
+    return render_template('login.html', form=form)
+
+
+# Logout Route
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
