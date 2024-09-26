@@ -74,17 +74,39 @@ class CoverAssignment(db.Model):
     covering_teacher = db.relationship('Teacher', foreign_keys=[covering_teacher_id], backref='covers')
 
 
-class User(UserMixin, db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(50), nullable=False)  # 'admin' or 'teacher'
+    role = db.Column(db.String(50), nullable=False)
 
+    # Method to set a password, which hashes it
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    # Method to verify the password by comparing hashes
+    def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    # Flask-Login required methods (inherited from UserMixin)
+    @property
+    def is_active(self):
+        # You can add logic to check if a user is active, or just return True
+        return True
+
+    @property
+    def is_authenticated(self):
+        # Always return True, as this is handled by Flask-Login
+        return True
+
+    @property
+    def is_anonymous(self):
+        # Anonymous users are not authenticated, so return False
+        return False
+
+    def get_id(self):
+        # Flask-Login requires a method that returns the user's ID as a string
+        return str(self.id)
 
     def is_admin(self):
         return self.role == 'admin'

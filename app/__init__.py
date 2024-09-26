@@ -16,11 +16,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.get(user_id)
+
 
 from app import models, routes, helpers
+
 
 
 

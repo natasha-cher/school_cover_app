@@ -3,6 +3,22 @@
 {% block title %}Home - School Management System{% endblock %}
 
 {% block content %}
+<!-- Flash Messages Section -->
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-dismissible fade show mt-3" role="alert">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endif %}
+    {% endwith %}
+</div>
+
 <!-- Hero Section -->
 <div class="hero bg-primary text-white text-center py-5">
     <div class="container">

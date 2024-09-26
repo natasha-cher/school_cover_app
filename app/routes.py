@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, request, flash, jsonify
 from app import app, db
 from app.models import LeaveRequest, CoverAssignment, Teacher, User
 from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginForm
-from flask_login import login_user, logout_user, current_user, login_required
+from flask_login import login_user, logout_user, current_user, login_required, LoginManager
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
@@ -12,9 +12,18 @@ from app.helpers import (
 )
 
 
+# Initialize Flask-Login's LoginManager
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
 # Home route
 @app.route('/')
-@login_required
 def index():
     pending_count = LeaveRequest.query.filter_by(status='pending').count()
     total_teachers = Teacher.query.count()
@@ -173,7 +182,6 @@ def view_cover_assignments():
 
 
 @app.route('/sign_up_options')
-@login_required
 def sign_up_options():
     return render_template('sign_up_options.html')
 
@@ -186,36 +194,45 @@ def sign_up(role):
 
     form = SignupForm()
     if form.validate_on_submit():
+        # Check if the email already exists
         user = User.query.filter_by(email=form.email.data).first()
         if user is None:
+            # Create the new user
             new_user = User(email=form.email.data, role=role)
             new_user.set_password(form.password.data)
             db.session.add(new_user)
             db.session.commit()
-            # login_user(new_user)
-            flash(f'Sign up successful. You are logged in as a {role}.')
+
+            # Log in the user after signup
+            login_user(new_user)
+
+            flash(f'Sign up successful. You are now logged in as a {role}.')
+
+            # Redirect based on role
             if role == 'admin':
                 return redirect(url_for('admin_dashboard'))
             else:
                 return redirect(url_for('teacher_dashboard'))
         else:
             flash('Email already exists. Please use a different email.')
+
     return render_template('sign_up.html', form=form, role=role)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:  # If the user is already logged in
-        return redirect(url_for('index'))
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))  # or wherever you want to send logged-in users
+
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.verify_password(form.password.data):
             login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('index'))
+            flash('Login successful!', 'success')
+            return redirect(url_for('index'))
         else:
-            flash('Login failed. Check email and password.', 'danger')
+            flash('Login failed. Check your email and password.', 'danger')
     return render_template('login.html', form=form)
 
 
@@ -223,6 +240,9 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
+    user_email = current_user.email
     logout_user()
-    return redirect(url_for('index'))
+    flash('You have been logged out successfully!', 'success')
+    app.logger.info(f'User {user_email} logged out.')
+    return redirect(url_for('login'))
 
