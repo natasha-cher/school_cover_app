@@ -25,8 +25,8 @@ class LeaveRequestForm(FlaskForm):
 
     # Set teacher name and ID based on the logged-in user
     def set_teacher_info(self):
-        self.teacher_name.data = current_user.name  # Display the current user's name
-        self.teacher_id.data = current_user.id  # Store the current user's ID
+        self.teacher_name.data = current_user.name
+        self.teacher_id.data = current_user.id
 
 
 # Cover Assignment Form

@@ -9,11 +9,12 @@
 <form action="{{ url_for('leave_request') }}" method="POST" id="leaveRequestForm" class="form-horizontal">
     {{ form.hidden_tag() }}  <!-- Include CSRF token -->
 
-    <!-- Teacher Selection Dropdown -->
-    <div class="form-group">
-        <label for="teacher_id" class="col-sm-2 control-label">Teacher:</label>
+    <!-- Teacher Selection - using current_user -->
+    <div class="form-group mt-4">
+        <label class="col-sm-2 control-label">Teacher: </label>
         <div class="col-sm-10">
-            {{ form.teacher_id(class="form-control") }}
+            <input type="text" class="form-control" value="{{ current_user.name }}" readonly>
+            <input type="hidden" name="teacher_id" value="{{ current_user.id }}">
         </div>
     </div>
 
@@ -52,8 +53,15 @@
     <!-- Periods for Selected Days -->
     <h3>Select periods for cover:</h3>
     <div id="periods-container">
-        <p>Please select a teacher and a date range to see their TeachingSlot.</p>
+        <p>Please select a date range to see teaching slots that need cover.</p>
     </div>
+
+    <!-- Display validation errors -->
+    {% for field, errors in form.errors.items() %}
+        <div class="alert alert-danger">
+            <strong>{{ field }}:</strong> {{ errors|join(', ') }}
+        </div>
+    {% endfor %}
 
     <!-- Submit Button -->
     <div class="form-group">
@@ -64,3 +72,6 @@
 </form>
 
 {% endblock %}
+
+
+

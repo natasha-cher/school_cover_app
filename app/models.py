@@ -91,7 +91,7 @@ class LeaveRequest(db.Model):
     status = db.Column(db.String(50), nullable=False)
     comment = db.Column(db.Text, nullable=True)
 
-    # Foreign key to the User model (instead of Teacher)
+    # Foreign key to the User model
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 

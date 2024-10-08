@@ -60,15 +60,11 @@ def teachers():
 @app.route('/leave-request', methods=['GET', 'POST'])
 @login_required
 def leave_request():
-    teachers = get_all_teachers()
     form = LeaveRequestForm()
-
-    # Populate the teacher choices for the form
-    form.teacher_id.choices = [(teacher.id, teacher.name) for teacher in teachers]
 
     if form.validate_on_submit():
         leave_request = LeaveRequest(
-            teacher_id=form.teacher_id.data,
+            user_id=current_user.id,
             start_date=form.start_date.data,
             end_date=form.end_date.data,
             reason=form.reason.data,
@@ -81,7 +77,7 @@ def leave_request():
         flash('Leave request submitted successfully.')
         return redirect(url_for('view_leave_requests'))
 
-    return render_template('leave_request.html', teachers=teachers, form=form)
+    return render_template('leave_request.html', form=form)
 
 
 # Get Teaching Periods
