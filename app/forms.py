@@ -54,15 +54,16 @@ class SignupForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
 
-    # Department select field
-    department_id = SelectField('Department', coerce=int, validators=[DataRequired()])
+    # Department select field with a default choice
+    department_id = SelectField('Department', coerce=int, validators=[DataRequired()],
+                                choices=[(0, '-- Select Department --')])  # Add default choice
 
     submit = SubmitField('Sign Up')
 
     def __init__(self, *args, **kwargs):
         super(SignupForm, self).__init__(*args, **kwargs)
         # Populate department choices
-        self.department_id.choices = [(dept.id, dept.name) for dept in Department.query.all()]
+        self.department_id.choices += [(dept.id, dept.name) for dept in Department.query.all()]
 
     # Custom validator to check if the email already exists
     def validate_email(self, email):

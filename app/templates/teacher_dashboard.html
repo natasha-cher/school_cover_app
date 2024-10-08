@@ -13,10 +13,10 @@
         </div>
         <div class="card-body">
             {% if pending_requests %}
-                <p>You have {{ pending_requests.count() }} pending leave requests.</p>
-                <a href="{{ url_for('view_leave_requests') }}" class="btn btn-primary">View Leave Requests</a>
+            <p>You have {{ pending_requests.count() }} pending leave requests.</p>
+            <a href="{{ url_for('view_leave_requests') }}" class="btn btn-primary">View Leave Requests</a>
             {% else %}
-                <p>You have no pending leave requests.</p>
+            <p>You have no pending leave requests.</p>
             {% endif %}
         </div>
     </div>
