@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import SelectField, DateField, TextAreaField, SubmitField, PasswordField, StringField, HiddenField, BooleanField
+from wtforms import SelectField, DateField, TextAreaField, SubmitField, PasswordField, StringField, HiddenField, \
+    BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
-from app.models import User
+from app.models import User, Department
 from flask_login import current_user
 
 
@@ -41,8 +42,6 @@ class CoverAssignmentForm(FlaskForm):
 
 # Sign Up Form
 class SignupForm(FlaskForm):
-    first_name = StringField('First Name', validators=[DataRequired(), Length(min=2, max=100)])
-    last_name = StringField('Last Name', validators=[DataRequired(), Length(min=2, max=100)])
     email = StringField('Email', validators=[DataRequired(), Email(), Length(min=6, max=120)])
     password = PasswordField('Password', validators=[
         DataRequired(),
@@ -52,8 +51,18 @@ class SignupForm(FlaskForm):
         DataRequired(),
         EqualTo('password', message='Passwords must match.')
     ])
-    department = StringField('Department', validators=[DataRequired(), Length(min=2, max=100)])  # New field
+    first_name = StringField('First Name', validators=[DataRequired()])
+    last_name = StringField('Last Name', validators=[DataRequired()])
+
+    # Department select field
+    department_id = SelectField('Department', coerce=int, validators=[DataRequired()])
+
     submit = SubmitField('Sign Up')
+
+    def __init__(self, *args, **kwargs):
+        super(SignupForm, self).__init__(*args, **kwargs)
+        # Populate department choices
+        self.department_id.choices = [(dept.id, dept.name) for dept in Department.query.all()]
 
     # Custom validator to check if the email already exists
     def validate_email(self, email):

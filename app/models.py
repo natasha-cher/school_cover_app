@@ -11,7 +11,7 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(50), nullable=False)
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
-    department = db.Column(db.String(100), nullable=False)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)
 
     # Method to set a password, which hashes it
     def set_password(self, password):
@@ -46,6 +46,16 @@ class User(db.Model, UserMixin):
     @property
     def name(self):
         return f"{self.first_name} {self.last_name}"
+
+
+class Department(db.Model):
+    __tablename__ = 'department'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+    # Relationship: A department can have multiple teachers
+    teachers = db.relationship('User', backref='department', lazy=True)
 
 
 class Lesson(db.Model):
