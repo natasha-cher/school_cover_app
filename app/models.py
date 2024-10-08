@@ -1,17 +1,21 @@
-# models.py
 from app import db
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(db.Model, UserMixin):
+    __tablename__ = 'user'
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
+    role = db.Column(db.String(50), nullable=False)  # e.g., 'admin', 'teacher'
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)
+
+    # Relationship: A user can have multiple leave requests
+    leave_requests = db.relationship('LeaveRequest', backref='user', lazy=True)
 
     # Method to set a password, which hashes it
     def set_password(self, password):
@@ -54,7 +58,7 @@ class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
 
-    # Relationship: A department can have multiple teachers
+    # Relationship: A department can have multiple users (teachers)
     teachers = db.relationship('User', backref='department', lazy=True)
 
 
@@ -66,47 +70,48 @@ class Lesson(db.Model):
     year_group = db.Column(db.String(50), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
 
-    # Relationship: A lesson can have many TeachingSlots
-    TeachingSlots = db.relationship('TeachingSlot', backref='lesson', lazy=True)
+    # Relationship: A lesson can have many teaching slots
+    teaching_slots = db.relationship('TeachingSlot', backref='lesson', lazy=True)
 
 
 class TeachingSlot(db.Model):
-    __tablename__ = 'TeachingSlot'
+    __tablename__ = 'teaching_slot'
 
     id = db.Column(db.Integer, primary_key=True)
     lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Referring to User
 
     day_of_week = db.Column(db.Integer, nullable=False)
     period_number = db.Column(db.Integer, nullable=False)
+
+    # Relationship back to the user
+    teacher = db.relationship('User', backref='teaching_slots')
 
 
 class LeaveRequest(db.Model):
     __tablename__ = 'leave_request'
 
     id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign key to User
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     reason = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(50), nullable=False)  # e.g., 'pending', 'approved', 'declined'
     comment = db.Column(db.Text, nullable=True)
 
-    # Foreign key to the User model
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # Relationship to the User model
+    user = db.relationship('User', backref='leave_requests')
 
 
 class CoverAssignment(db.Model):
     __tablename__ = 'cover_assignment'
 
     id = db.Column(db.Integer, primary_key=True)
-
-    absent_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    covering_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    absent_teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    covering_teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)
+    teaching_slot_id = db.Column(db.Integer, db.ForeignKey('teaching_slot.id'), nullable=False)
 
-    # Foreign keys now point to User model
-    teaching_slot_id = db.Column(db.Integer, db.ForeignKey('TeachingSlot.id'), nullable=False)
-
-    absent_user = db.relationship('User', foreign_keys=[absent_user_id], backref='absences')
-    covering_user = db.relationship('User', foreign_keys=[covering_user_id], backref='covers')
-
+    # Relationships for cover assignments
+    absent_teacher = db.relationship('User', foreign_keys=[absent_teacher_id], backref='absences')
+    covering_teacher = db.relationship('User', foreign_keys=[covering_teacher_id], backref='covers')

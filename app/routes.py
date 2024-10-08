@@ -64,7 +64,7 @@ def leave_request():
 
     if form.validate_on_submit():
         leave_request = LeaveRequest(
-            user_id=current_user.id,
+            user_id=form.teacher_id.data,
             start_date=form.start_date.data,
             end_date=form.end_date.data,
             reason=form.reason.data,

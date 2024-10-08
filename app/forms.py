@@ -8,7 +8,7 @@ from flask_login import current_user
 
 # Leave Request Form
 class LeaveRequestForm(FlaskForm):
-    teacher_name = StringField('Teacher Name', validators=[DataRequired()], render_kw={'readonly': True})
+    teacher_name = StringField('Teacher Name', render_kw={'readonly': True})
     teacher_id = HiddenField('Teacher ID')  # Hidden field to store the teacher's ID
 
     start_date = DateField('Start Date', format='%Y-%m-%d', validators=[DataRequired()])
