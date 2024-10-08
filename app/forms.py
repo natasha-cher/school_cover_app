@@ -55,7 +55,7 @@ class SignupForm(FlaskForm):
     last_name = StringField('Last Name', validators=[DataRequired()])
 
     # Department select field with a default choice
-    department_id = SelectField('Department', coerce=int, validators=[DataRequired()],
+    department_id = SelectField('Department', coerce=int,
                                 choices=[(0, '-- Select Department --')])  # Add default choice
 
     submit = SubmitField('Sign Up')

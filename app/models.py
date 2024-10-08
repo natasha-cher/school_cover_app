@@ -14,8 +14,8 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(100), nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)
 
-    # Relationship: A user can have multiple leave requests
-    leave_requests = db.relationship('LeaveRequest', backref='user', lazy=True)
+    # A user can have multiple leave requests
+    leave_requests = db.relationship('LeaveRequest', backref='requesting_user', lazy=True)
 
     # Method to set a password, which hashes it
     def set_password(self, password):
@@ -25,7 +25,6 @@ class User(db.Model, UserMixin):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    # Flask-Login required methods (inherited from UserMixin)
     @property
     def is_active(self):
         return True
@@ -58,7 +57,7 @@ class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
 
-    # Relationship: A department can have multiple users (teachers)
+    # A department can have multiple users (teachers)
     teachers = db.relationship('User', backref='department', lazy=True)
 
 
@@ -70,7 +69,7 @@ class Lesson(db.Model):
     year_group = db.Column(db.String(50), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
 
-    # Relationship: A lesson can have many teaching slots
+    # A lesson can have many teaching slots
     teaching_slots = db.relationship('TeachingSlot', backref='lesson', lazy=True)
 
 
@@ -92,7 +91,7 @@ class LeaveRequest(db.Model):
     __tablename__ = 'leave_request'
 
     id = db.Column(db.Integer, primary_key=True)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign key to User
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign key to User
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     reason = db.Column(db.String(255), nullable=True)
@@ -100,7 +99,7 @@ class LeaveRequest(db.Model):
     comment = db.Column(db.Text, nullable=True)
 
     # Relationship to the User model
-    user = db.relationship('User', backref='leave_requests')
+    requesting_user = db.relationship('User', backref='leave_requests')
 
 
 class CoverAssignment(db.Model):
