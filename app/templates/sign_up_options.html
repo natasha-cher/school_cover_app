@@ -4,6 +4,14 @@
 
 {% block content %}
 
+<!-- Hero Section -->
+<div class="hero bg-primary text-white text-center py-5">
+    <div class="container">
+        <h1 class="display-4">Welcome to Teacher Cover</h1>
+        <p class="lead">Manage leave requests and cover assignments effortlessly.</p>
+    </div>
+</div>
+
 <div class="container mt-5">
     <h1 class="text-center">Sign Up As:</h1>
     <div class="row justify-content-center mt-4">
@@ -13,6 +21,11 @@
         <div class="col-md-4 mb-3">
             <a href="{{ url_for('sign_up', role='admin') }}" class="btn btn-success btn-block">Sign Up as Admin</a>
         </div>
+    </div>
+
+    <!-- Already a User? Section -->
+    <div class="text-center mt-4">
+        <p>Already a User? <a href="{{ url_for('login') }}">Login here</a></p>
     </div>
 </div>
 

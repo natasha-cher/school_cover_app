@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Teacher Dashboard</h1>
+
+    <!-- Pending Leave Requests Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Pending Leave Requests
+        </div>
+        <div class="card-body">
+            {% if pending_requests %}
+                <p>You have {{ pending_requests.count() }} pending leave requests.</p>
+                <a href="{{ url_for('view_leave_requests') }}" class="btn btn-primary">View Leave Requests</a>
+            {% else %}
+                <p>You have no pending leave requests.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Announcements Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Announcements
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                <li class="list-group-item">School opens on <strong>October 1st</strong>.</li>
+                <li class="list-group-item">Parent-Teacher meetings are scheduled for <strong>October 5th</strong>.</li>
+                <li class="list-group-item">Reminder: Submit your lesson plans by <strong>September 30th</strong>.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Resources Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Resources
+        </div>
+        <div class="card-body">
+            <p>Here are some helpful resources for teachers:</p>
+            <ul>
+                <li><a href="#">Lesson Planning Guide</a></li>
+                <li><a href="#">Classroom Management Strategies</a></li>
+                <li><a href="#">Teaching Resources</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Logout Button -->
+    <div class="text-center">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </div>
+</div>
+{% endblock %}

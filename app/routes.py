@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from app import app, db
-from app.models import LeaveRequest, CoverAssignment, Teacher, User
+from app.models import LeaveRequest, CoverAssignment, User
 from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginForm
 from flask_login import login_user, logout_user, current_user, login_required, LoginManager
 from app.helpers import (
@@ -22,12 +22,33 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# Home route
 @app.route('/')
 def index():
+    return redirect(url_for('sign_up_options'))
+
+
+# Home route
+@app.route('/admin_dashboard')
+def admin_dashboard():
     pending_count = LeaveRequest.query.filter_by(status='pending').count()
     total_teachers = Teacher.query.count()
-    return render_template('index.html', pending_count=pending_count, total_teachers=total_teachers)
+    return render_template('admin_dashboard.html', pending_count=pending_count, total_teachers=total_teachers)
+
+
+@app.route('/teacher_dashboard')
+@login_required
+def teacher_dashboard():
+    if not current_user.is_teacher():
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('index'))
+
+    # Example data to pass to the template
+    pending_requests = []
+    assignments = []
+
+    return render_template('teacher_dashboard.html',
+                           pending_requests=pending_requests,
+                           assignments=assignments)
 
 
 # Display all teachers
@@ -222,7 +243,10 @@ def sign_up(role):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))  # or wherever you want to send logged-in users
+        if current_user.is_admin():
+            return redirect(url_for('admin_dashboard'))
+        elif current_user.is_teacher():
+            return redirect(url_for('teacher_dashboard'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -230,7 +254,10 @@ def login():
         if user and user.verify_password(form.password.data):
             login_user(user, remember=form.remember.data)
             flash('Login successful!', 'success')
-            return redirect(url_for('index'))
+            if user.is_admin():
+                return redirect(url_for('admin_dashboard'))
+            elif user.is_teacher():
+                return redirect(url_for('teacher_dashboard'))
         else:
             flash('Login failed. Check your email and password.', 'danger')
     return render_template('login.html', form=form)

@@ -1,4 +1,4 @@
-from app.models import Teacher, LeaveRequest, TeachingSlot
+from app.models import LeaveRequest, TeachingSlot
 from datetime import datetime, timedelta
 
 
