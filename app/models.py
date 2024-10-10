@@ -15,7 +15,7 @@ class User(db.Model, UserMixin):
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)
 
     # A user can have multiple leave requests
-    leave_requests = db.relationship('LeaveRequest', backref='requesting_user', lazy=True)
+    # leave_requests = db.relationship('LeaveRequest', backref='requesting_user', lazy=True)
 
     # Method to set a password, which hashes it
     def set_password(self, password):

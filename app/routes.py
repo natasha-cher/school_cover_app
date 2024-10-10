@@ -18,7 +18,8 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    # Replaced with db.get_or_404 for fetching by primary key
+    return db.session.get(User, int(user_id))
 
 
 @app.route('/')
@@ -30,8 +31,10 @@ def index():
 @app.route('/admin_dashboard')
 @login_required
 def admin_dashboard():
-    pending_count = LeaveRequest.query.filter_by(status='pending').count()
-    total_teachers = User.query.filter_by(role='teacher').count()  # Assuming User is where teachers are stored
+    # Using newer syntax for query
+    pending_count = db.session.execute(db.select(LeaveRequest).filter_by(status='pending')).scalar()
+    total_teachers = db.session.execute(db.select(User).filter_by(role='teacher')).scalar()
+
     return render_template('admin_dashboard.html', pending_count=pending_count, total_teachers=total_teachers)
 
 
@@ -105,9 +108,10 @@ def get_teaching_periods(request_id):
 @app.route('/view_leave_requests')
 @login_required
 def view_leave_requests():
-    pending_requests = LeaveRequest.query.filter_by(status='pending').all()
-    approved_requests = LeaveRequest.query.filter_by(status='approved').all()
-    declined_requests = LeaveRequest.query.filter_by(status='declined').all()
+    pending_requests = db.session.execute(db.select(LeaveRequest).filter_by(status='pending')).scalars().all()
+    approved_requests = db.session.execute(db.select(LeaveRequest).filter_by(status='approved')).scalars().all()
+    declined_requests = db.session.execute(db.select(LeaveRequest).filter_by(status='declined')).scalars().all()
+
     return render_template('view_leave_requests.html',
                            pending_requests=pending_requests,
                            approved_requests=approved_requests,
@@ -174,7 +178,7 @@ def assign_cover(leave_request_id):
 @app.route('/cover_assignments')
 @login_required
 def view_cover_assignments():
-    cover_assignments = CoverAssignment.query.all()
+    cover_assignments = db.session.execute(db.select(CoverAssignment)).scalars().all()
     return render_template('cover_assignments.html', cover_assignments=cover_assignments)
 
 
@@ -193,7 +197,7 @@ def sign_up(role):
 
     form = SignupForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = db.session.execute(db.select(User).filter_by(email=form.email.data)).scalar()
         if user is None:
             new_user = User(
                 email=form.email.data,
@@ -223,7 +227,7 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = db.session.execute(db.select(User).filter_by(email=form.email.data)).scalar()
         if user and user.verify_password(form.password.data):
             login_user(user, remember=form.remember.data)
             flash('Login successful!', 'success')
