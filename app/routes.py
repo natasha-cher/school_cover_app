@@ -29,8 +29,13 @@ def index():
 @app.route('/admin_dashboard')
 @login_required
 def admin_dashboard():
-    pending_count = db.session.execute(db.select(LeaveRequest).filter_by(status='pending')).scalar()
-    total_teachers = db.session.execute(db.select(User).filter_by(role='teacher')).scalar()
+    pending_count = db.session.execute(
+        db.select(LeaveRequest).filter_by(status='pending').with_only_columns(db.func.count())
+    ).scalar()
+
+    total_teachers = db.session.execute(
+        db.select(User).filter_by(role='teacher').with_only_columns(db.func.count())
+    ).scalar()
 
     return render_template('admin_dashboard.html', pending_count=pending_count, total_teachers=total_teachers)
 
