@@ -6,7 +6,6 @@ from flask_login import login_user, logout_user, current_user, login_required, L
 from app.helpers import (
     get_leave_request_by_id,
     get_all_teachers,
-    validate_dates,
     get_teaching_slots_by_date_range,
     get_available_teachers_for_cover,
 )
@@ -18,7 +17,6 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    # Replaced with db.get_or_404 for fetching by primary key
     return db.session.get(User, int(user_id))
 
 
@@ -31,7 +29,6 @@ def index():
 @app.route('/admin_dashboard')
 @login_required
 def admin_dashboard():
-    # Using newer syntax for query
     pending_count = db.session.execute(db.select(LeaveRequest).filter_by(status='pending')).scalar()
     total_teachers = db.session.execute(db.select(User).filter_by(role='teacher')).scalar()
 

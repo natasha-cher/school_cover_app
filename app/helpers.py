@@ -1,25 +1,18 @@
-from app.models import LeaveRequest, TeachingSlot, User  # Ensure User is imported if needed
+from app.models import LeaveRequest, TeachingSlot, User
 from datetime import datetime, timedelta
+from app import db
 
 
 def get_all_teachers():
-    """Fetches all teachers from the database."""
-    return User.query.filter_by(role='teacher').all()  # Assuming teachers are stored with 'teacher' role
-
-
-def validate_dates(start_date_str, end_date_str):
-    """Validates and converts date strings to datetime objects."""
-    try:
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-        return start_date, end_date
-    except ValueError:
-        return None, None
+    """Fetches all teachers from the database using the newer query syntax."""
+    # Using newer syntax with db.session.execute and db.select
+    return db.session.execute(db.select(User).filter_by(role='teacher')).scalars().all()
 
 
 def get_leave_request_by_id(leave_request_id):
     """Fetches a leave request by its ID."""
-    return LeaveRequest.query.get(leave_request_id)
+    # Using db.get for primary key lookups
+    return db.session.get(LeaveRequest, leave_request_id)
 
 
 def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
@@ -29,7 +22,10 @@ def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
 
     while current_date <= end_date:
         day_of_week = current_date.weekday()  # 0 = Monday, 6 = Sunday
-        daily_teaching_slots = TeachingSlot.query.filter_by(teacher_id=teacher_id, day_of_week=day_of_week).all()
+        # Use newer syntax for querying teaching slots by day of week and teacher_id
+        daily_teaching_slots = db.session.execute(
+            db.select(TeachingSlot).filter_by(teacher_id=teacher_id, day_of_week=day_of_week)
+        ).scalars().all()
         teaching_slots.extend(daily_teaching_slots)
         current_date += timedelta(days=1)
 
