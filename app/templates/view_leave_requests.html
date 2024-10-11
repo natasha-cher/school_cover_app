@@ -21,7 +21,7 @@
             {% if pending_requests %}
             {% for request in pending_requests %}
             <tr>
-                <td>{{ request.teacher.name }}</td>
+                <td>{{ request.requesting_user.full_name }}</td>
                 <td>{{ request.start_date }}</td>
                 <td>{{ request.end_date }}</td>
                 <td>{{ request.reason }}</td>
@@ -60,7 +60,7 @@
             {% if approved_requests %}
             {% for request in approved_requests %}
             <tr>
-                <td>{{ request.teacher.name }}</td>
+                <td>{{ request.requesting_user.full_name }}</td>
                 <td>{{ request.start_date }}</td>
                 <td>{{ request.end_date }}</td>
                 <td>{{ request.reason }}</td>
@@ -97,7 +97,7 @@
             {% if declined_requests %}
             {% for request in declined_requests %}
             <tr>
-                <td>{{ request.teacher.name }}</td>
+                <td>{{ request.requesting_user.full_name }}</td>
                 <td>{{ request.start_date }}</td>
                 <td>{{ request.end_date }}</td>
                 <td>{{ request.reason }}</td>

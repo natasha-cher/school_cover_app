@@ -5,14 +5,7 @@ from app import db
 
 def get_all_teachers():
     """Fetches all teachers from the database using the newer query syntax."""
-    # Using newer syntax with db.session.execute and db.select
     return db.session.execute(db.select(User).filter_by(role='teacher')).scalars().all()
-
-
-def get_leave_request_by_id(leave_request_id):
-    """Fetches a leave request by its ID."""
-    # Using db.get for primary key lookups
-    return db.session.get(LeaveRequest, leave_request_id)
 
 
 def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):

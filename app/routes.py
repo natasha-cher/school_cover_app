@@ -46,7 +46,7 @@ def admin_dashboard():
 def teacher_dashboard():
     if not current_user.is_teacher():
         flash('You do not have permission to access this page.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('login'))
 
     pending_requests = []
     assignments = []
@@ -89,9 +89,7 @@ def leave_request():
 @app.route('/periods/<int:request_id>')
 @login_required
 def get_teaching_periods(request_id):
-    leave_request = get_leave_request_by_id(request_id)
-    if not leave_request:
-        return jsonify({'error': 'Leave request not found'}), 404
+    leave_request = db.get_or_404(LeaveRequest, request_id)
 
     periods = get_teaching_slots_by_date_range(
         leave_request.teacher_id,
@@ -124,15 +122,15 @@ def view_leave_requests():
 @app.route('/handle_request/<int:request_id>', methods=['POST'])
 @login_required
 def handle_request(request_id):
-    leave_request = get_leave_request_by_id(request_id)
+    leave_request = db.get_or_404(LeaveRequest, request_id)
     action = request.form.get('action')
 
-    if leave_request and action in ['approve', 'decline']:
+    if action in ['approve', 'decline']:
         leave_request.status = 'approved' if action == 'approve' else 'declined'
         db.session.commit()
         flash(f'Leave request {action}d successfully.')
     else:
-        flash('Leave request not found or invalid action.')
+        flash('Invalid action.')
 
     return redirect(url_for('view_leave_requests'))
 
@@ -141,18 +139,14 @@ def handle_request(request_id):
 @app.route('/assign-cover/<int:leave_request_id>', methods=['GET', 'POST'])
 @login_required
 def assign_cover(leave_request_id):
-    leave_request = get_leave_request_by_id(leave_request_id)
-    if not leave_request:
-        flash('Leave request not found.')
-        return redirect(url_for('view_leave_requests'))
+    leave_request = db.get_or_404(LeaveRequest, leave_request_id)
 
     form = CoverAssignmentForm()
     available_teachers = get_available_teachers_for_cover(leave_request)
-    form.cover_teacher_id.choices = [(teacher.id, teacher.name) for teacher in available_teachers]
+    form.cover_teacher_id.choices = [(teacher.id, teacher.full_name) for teacher in available_teachers]
 
     if form.validate_on_submit():
-        # Loop through each teaching slot and assign cover teachers
-        for slot in leave_request.teaching_slots:  # Assuming leave_request has related teaching_slots
+        for slot in leave_request.teaching_slots:
             cover_teacher_id = request.form.get(f'cover_teacher_{slot.period_number}')
             if cover_teacher_id:
                 cover_assignment = CoverAssignment(
@@ -167,7 +161,7 @@ def assign_cover(leave_request_id):
         return redirect(url_for('view_leave_requests'))
 
     teaching_slots = get_teaching_slots_by_date_range(
-        leave_request.teacher_id, leave_request.start_date, leave_request.end_date
+        leave_request.user_id, leave_request.start_date, leave_request.end_date
     )
 
     return render_template('assign_cover.html', leave_request=leave_request,
@@ -199,16 +193,21 @@ def sign_up(role):
 
     form = SignupForm()
     if form.validate_on_submit():
-        user = db.session.execute(db.select(User).filter_by(email=form.email.data)).scalar()
+        try:
+            user = db.one_or_404(db.select(User).filter_by(email=form.email.data),
+                                 description="User with this email does not exist.")
+        except:
+            user = None  # Proceed with user creation if the user is not found
+
         if user is None:
             new_user = User(
                 email=form.email.data,
-                role=role,  # Set the role dynamically
+                role=role,
                 first_name=form.first_name.data,
                 last_name=form.last_name.data,
                 department_id=form.department_id.data
             )
-            new_user.set_password(form.password.data)  # Make sure to hash the password
+            new_user.set_password(form.password.data)
             db.session.add(new_user)
             db.session.commit()
 
@@ -229,7 +228,8 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = db.session.execute(db.select(User).filter_by(email=form.email.data)).scalar()
+        user = db.first_or_404(db.select(User).filter_by(email=form.email.data),
+                               description="Invalid email or password.")
         if user and user.verify_password(form.password.data):
             login_user(user, remember=form.remember.data)
             flash('Login successful!', 'success')
