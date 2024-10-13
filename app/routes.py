@@ -68,19 +68,22 @@ def leave_request():
 
     if form.validate_on_submit():
         leave_request = LeaveRequest(
-            user_id=form.teacher_id.data,
+            user_id=current_user.id,
             start_date=form.start_date.data,
             end_date=form.end_date.data,
             reason=form.reason.data,
             status='pending',
             comment=form.comment.data
         )
-        db.session.add(leave_request)
-        db.session.commit()
+        try:
+            db.session.add(leave_request)
+            db.session.commit()
+            flash('Leave request submitted successfully.')
+        except Exception as e:
+            db.session.rollback()  # Rollback the session on error
+            flash('An error occurred while submitting your leave request. Please try again.')
 
-        flash('Leave request submitted successfully.')
         return redirect(url_for('view_leave_requests'))
-
     return render_template('leave_request.html', form=form)
 
 

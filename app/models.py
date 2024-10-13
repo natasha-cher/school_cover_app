@@ -5,7 +5,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
-
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
@@ -14,8 +13,7 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(100), nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)
 
-    # A user can have multiple leave requests
-    # leave_requests = db.relationship('LeaveRequest', backref='requesting_user', lazy=True)
+    leave_requests = db.relationship('LeaveRequest', back_populates='requesting_user', lazy=True)
 
     # Method to set a password, which hashes it
     def set_password(self, password):
@@ -91,15 +89,15 @@ class LeaveRequest(db.Model):
     __tablename__ = 'leave_request'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign key to User
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     reason = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.String(50), nullable=False)  # e.g., 'pending', 'approved', 'declined'
+    status = db.Column(db.String(50), nullable=False)  # 'pending', 'approved', 'declined'
     comment = db.Column(db.Text, nullable=True)
 
-    # Relationship to the User model
-    requesting_user = db.relationship('User', backref='leave_requests')
+    # Back-populates to the User model
+    requesting_user = db.relationship('User', back_populates='leave_requests')
 
 
 class CoverAssignment(db.Model):
