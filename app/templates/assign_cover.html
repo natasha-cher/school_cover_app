@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-    <h2>Assign Cover for {{ leave_request.teacher.full_name }}</h2>
+    <h2>Assign Cover for {{ leave_request.requesting_user.full_name }}</h2>
     <p class="lead">Leave Dates: {{ leave_request.start_date }} to {{ leave_request.end_date }}</p>
 
     <form method="POST">

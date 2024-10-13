@@ -16,10 +16,4 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-
-
 from app import models, routes, helpers
-
-
-
-
