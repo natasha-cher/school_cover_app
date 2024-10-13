@@ -21,7 +21,7 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return redirect(url_for('sign_up_options'))
+    return render_template('index.html')
 
 
 # Admin Dashboard
@@ -180,7 +180,7 @@ def view_cover_assignments():
 # Sign Up Options
 @app.route('/sign_up_options')
 def sign_up_options():
-    return render_template('sign_up_options.html')
+    return render_template('index.html')
 
 
 # Signup Route
