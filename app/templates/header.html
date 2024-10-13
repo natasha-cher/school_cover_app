@@ -23,18 +23,19 @@
                     <a class="nav-link" href="{{ url_for('view_cover_assignments') }}">View Cover Assignments</a>
                 </li>
             </ul>
-            <ul class="navbar-nav ml-auto"> <!-- ml-auto aligns these links to the right -->
-                {% if not logged_in: %}
+            <ul class="navbar-nav ml-auto">
+                {% if not current_user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('sign_up_options') }}">Sign Up</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('login') }}">Log In</a>
                 </li>
-                {% endif %}
+                {% else %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </nav>
