@@ -4,7 +4,6 @@ from app.models import LeaveRequest, CoverAssignment, User
 from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginForm
 from flask_login import login_user, logout_user, current_user, login_required, LoginManager
 from app.helpers import (
-    get_leave_request_by_id,
     get_all_teachers,
     get_teaching_slots_by_date_range,
     get_available_teachers_for_cover,
