@@ -126,7 +126,6 @@ def view_leave_requests():
 @app.route('/handle_request/<int:request_id>', methods=['POST'])
 @login_required
 def handle_request(request_id):
-    # Check if the current user is an admin
     if not current_user.is_admin():
         flash('You do not have permission to handle leave requests.', 'danger')
         return redirect(url_for('view_leave_requests'))

@@ -1,26 +1,18 @@
 from app.models import LeaveRequest, TeachingSlot, User
-from datetime import datetime, timedelta
 from app import db
 
 
 def get_all_teachers():
-    """Fetches all teachers from the database using the newer query syntax."""
     return db.session.execute(db.select(User).filter_by(role='teacher')).scalars().all()
 
 
-def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
-    """Fetches teaching slots for a specific teacher within a date range."""
-    teaching_slots = []
-    current_date = start_date
-
-    while current_date <= end_date:
-        day_of_week = current_date.weekday()  # 0 = Monday, 6 = Sunday
-        # Use newer syntax for querying teaching slots by day of week and teacher_id
-        daily_teaching_slots = db.session.execute(
-            db.select(TeachingSlot).filter_by(teacher_id=teacher_id, day_of_week=day_of_week)
-        ).scalars().all()
-        teaching_slots.extend(daily_teaching_slots)
-        current_date += timedelta(days=1)
+def get_teaching_slots_by_date_range(start_date, end_date):
+    teaching_slots = db.session.execute(
+        db.select(TeachingSlot).filter(
+            TeachingSlot.date >= start_date,
+            TeachingSlot.date <= end_date
+        )
+    ).scalars().all()
 
     return teaching_slots
 
@@ -32,11 +24,8 @@ def get_available_teachers_for_cover(leave_request):
     available_teachers = []
 
     all_teachers = get_all_teachers()
-
-    # Check each teacher for availability during the leave period
-    for teacher in all_teachers:
-        teaching_slots = get_teaching_slots_by_date_range(teacher.id, start_date, end_date)
-        if not teaching_slots:
-            available_teachers.append(teacher)
+    teaching_slots = get_teaching_slots_by_date_range(start_date, end_date)
+    occupied_teacher_ids = {slot.teacher_id for slot in teaching_slots}
+    available_teachers = [teacher for teacher in all_teachers if teacher.id not in occupied_teacher_ids]
 
     return available_teachers
