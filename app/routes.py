@@ -124,15 +124,20 @@ def view_leave_requests():
 @app.route('/handle_request/<int:request_id>', methods=['POST'])
 @login_required
 def handle_request(request_id):
-    leave_request = db.get_or_404(LeaveRequest, request_id)
-    action = request.form.get('action')
+    # Check if the current user is an admin
+    if not current_user.is_admin():
+        flash('You do not have permission to handle leave requests.', 'danger')
+        return redirect(url_for('view_leave_requests'))
 
-    if action in ['approve', 'decline']:
+    leave_request = LeaveRequest.query.get_or_404(request_id)
+    action = request.form.get('action')
+    valid_actions = ['approve', 'decline']
+    if action in valid_actions:
         leave_request.status = 'approved' if action == 'approve' else 'declined'
         db.session.commit()
-        flash(f'Leave request {action}d successfully.')
+        flash(f'Leave request {action}d successfully.', 'success')
     else:
-        flash('Invalid action.')
+        flash('Invalid action. Please try again.', 'danger')
 
     return redirect(url_for('view_leave_requests'))
 
