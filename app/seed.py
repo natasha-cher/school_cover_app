@@ -2,7 +2,8 @@
 
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
+from random import choice
 
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -28,14 +29,29 @@ def seed_data():
         ]
         db.session.bulk_save_objects(departments)
 
-        # Seed Users
+        # Seed Users - One admin and nine teachers with real names
         users = [
             User(email='admin@example.com', first_name='Admin', last_name='User', role='admin'),
-            User(email='teacher1@example.com', first_name='John', last_name='Doe', role='teacher', department_id=1),
-            User(email='teacher2@example.com', first_name='Jane', last_name='Smith', role='teacher', department_id=2),
-            User(email='teacher3@example.com', first_name='Alice', last_name='Johnson', role='teacher', department_id=3),
-            User(email='teacher4@example.com', first_name='Bob', last_name='Williams', role='teacher', department_id=4)
+            User(email='jane.doe@example.com', first_name='Jane', last_name='Doe', role='teacher', department_id=1),
+            # Mathematics
+            User(email='john.doe@example.com', first_name='John', last_name='Doe', role='teacher', department_id=2),
+            # Science
+            User(email='alice.johnson@example.com', first_name='Alice', last_name='Johnson', role='teacher',
+                 department_id=3),  # Literature
+            User(email='bob.williams@example.com', first_name='Bob', last_name='Williams', role='teacher',
+                 department_id=4),  # History
+            User(email='mary.brown@example.com', first_name='Mary', last_name='Brown', role='teacher', department_id=5),
+            # Art
+            User(email='david.smith@example.com', first_name='David', last_name='Smith', role='teacher',
+                 department_id=1),  # Mathematics
+            User(email='susan.clark@example.com', first_name='Susan', last_name='Clark', role='teacher',
+                 department_id=2),  # Science
+            User(email='michael.evans@example.com', first_name='Michael', last_name='Evans', role='teacher',
+                 department_id=3),  # Literature
+            User(email='linda.martin@example.com', first_name='Linda', last_name='Martin', role='teacher',
+                 department_id=4)  # History
         ]
+
         for user in users:
             user.set_password('password')  # Set a default password
         db.session.bulk_save_objects(users)
@@ -46,38 +62,42 @@ def seed_data():
             Lesson(name='Biology', year_group='Year 11', subject='Science'),
             Lesson(name='Shakespeare', year_group='Year 12', subject='Literature'),
             Lesson(name='World History', year_group='Year 10', subject='History'),
-            Lesson(name='Painting Basics', year_group='Year 11', subject='Art')
+            Lesson(name='Painting Basics', year_group='Year 11', subject='Art'),
+            Lesson(name='Physics', year_group='Year 11', subject='Science'),
+            Lesson(name='Chemistry', year_group='Year 10', subject='Science'),
+            Lesson(name='English Literature', year_group='Year 12', subject='Literature'),
+            Lesson(name='Art History', year_group='Year 11', subject='Art'),
+            Lesson(name='Geometry', year_group='Year 10', subject='Mathematics')
         ]
         db.session.bulk_save_objects(lessons)
 
-        # Seed Teaching Slots
-        teaching_slots = [
-            TeachingSlot(lesson_id=1, teacher_id=2, day_of_week=1, period_number=1),  # Teacher 1 teaches Algebra
-            TeachingSlot(lesson_id=2, teacher_id=3, day_of_week=2, period_number=2),  # Teacher 2 teaches Biology
-            TeachingSlot(lesson_id=3, teacher_id=4, day_of_week=3, period_number=3),  # Teacher 3 teaches Shakespeare
-            TeachingSlot(lesson_id=4, teacher_id=2, day_of_week=4, period_number=1),  # Teacher 1 teaches World History
-            TeachingSlot(lesson_id=5, teacher_id=3, day_of_week=5, period_number=2)   # Teacher 2 teaches Painting Basics
-        ]
-        db.session.bulk_save_objects(teaching_slots)
-
         # Seed Leave Requests
-        leave_requests = [
-            LeaveRequest(user_id=2, start_date=date(2024, 10, 15), end_date=date(2024, 10, 17), reason='Family emergency', status='pending'),
-            LeaveRequest(user_id=3, start_date=date(2024, 10, 20), end_date=date(2024, 10, 22), reason='Sick leave', status='approved'),
-            LeaveRequest(user_id=4, start_date=date(2024, 10, 25), end_date=date(2024, 10, 28), reason='Personal reasons', status='declined')
-        ]
+        leave_requests = []
+        for user_id in range(2, 11):  # Assuming user IDs 2-10
+            start_date = date.today() + timedelta(days=choice(range(1, 30)))
+            end_date = start_date + timedelta(days=choice(range(1, 5)))  # Random end date within 4 days
+            reason = choice(['Family emergency', 'Sick leave', 'Personal reasons', 'Vacation'])
+            status = choice(['pending', 'approved', 'declined'])
+            leave_requests.append(
+                LeaveRequest(user_id=user_id, start_date=start_date, end_date=end_date, reason=reason, status=status))
         db.session.bulk_save_objects(leave_requests)
 
-        # Seed Cover Assignments
-        cover_assignments = [
-            CoverAssignment(absent_teacher_id=3, covering_teacher_id=2, date=date(2024, 10, 21), teaching_slot_id=2),
-            CoverAssignment(absent_teacher_id=4, covering_teacher_id=3, date=date(2024, 10, 26), teaching_slot_id=3)
-        ]
-        db.session.bulk_save_objects(cover_assignments)
+        # Seed Teaching Slots
+        teaching_slots = []
+        for teacher_id in range(2, 11):  # Skip admin (id 1)
+            for _ in range(20):  # Each teacher gets 20 teaching slots
+                lesson_id = choice(range(1, 11))  # Choose a lesson randomly
+                day_of_week = choice(range(1, 6))  # Random day of the week (1-5)
+                period_number = choice(range(1, 7))  # Random period number (1-6)
+                teaching_slots.append(TeachingSlot(lesson_id=lesson_id, teacher_id=teacher_id, day_of_week=day_of_week,
+                                                   period_number=period_number))
+
+        db.session.bulk_save_objects(teaching_slots)
 
         # Commit the session
         db.session.commit()
         print("Data seeded successfully.")
+
 
 if __name__ == '__main__':
     seed_data()

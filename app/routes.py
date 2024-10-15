@@ -6,8 +6,9 @@ from flask_login import login_user, logout_user, current_user, login_required, L
 from app.helpers import (
     get_all_teachers,
     get_teaching_slots_by_date_range,
-    get_available_teachers_for_cover,
+    get_available_teachers_for_slot
 )
+from datetime import timedelta
 
 main = Blueprint('main', __name__)
 
@@ -82,30 +83,11 @@ def leave_request():
             db.session.commit()
             flash('Leave request submitted successfully.')
         except Exception as e:
-            db.session.rollback()  # Rollback the session on error
+            db.session.rollback()
             flash('An error occurred while submitting your leave request. Please try again.')
 
         return redirect(url_for('view_leave_requests'))
     return render_template('leave_request.html', form=form)
-
-
-# Get Teaching Periods
-@app.route('/periods/<int:request_id>')
-@login_required
-def get_teaching_periods(request_id):
-    leave_request = db.get_or_404(LeaveRequest, request_id)
-
-    periods = get_teaching_slots_by_date_range(
-        leave_request.teacher_id,
-        leave_request.start_date,
-        leave_request.end_date
-    )
-
-    period_dict_list = [{'id': period.id, 'lesson_id': period.lesson_id, 'teacher_id': period.teacher_id,
-                         'day_of_week': period.day_of_week, 'period_number': period.period_number}
-                        for period in periods]
-
-    return jsonify({'periods': period_dict_list})
 
 
 # View Leave Requests
@@ -143,39 +125,60 @@ def handle_request(request_id):
     return redirect(url_for('view_leave_requests'))
 
 
+from datetime import datetime
+
+
+@app.route('/fetch-slots', methods=['POST'])
+@login_required
+def fetch_slots():
+    data = request.json
+    teacher_id = data.get('teacher_id')
+    start_date_str = data.get('start_date')
+    end_date_str = data.get('end_date')
+
+    # Convert string dates to datetime.date objects
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+    slots_to_cover = get_teaching_slots_by_date_range(
+        teacher_id, start_date, end_date
+    )
+
+    all_teachers = get_all_teachers()
+    slot_teacher_mapping = {
+        slot.id: {
+            'lesson': slot.lesson.name,
+            'period': slot.period_number,
+            'teachers': [
+                {'id': teacher.id, 'name': teacher.full_name}
+                for teacher in get_available_teachers_for_slot(slot, all_teachers)
+            ]
+        }
+        for slot in slots_to_cover
+    }
+    return jsonify(slot_teacher_mapping)
+
+
 # Assign Cover Route
 @app.route('/assign-cover/<int:leave_request_id>', methods=['GET', 'POST'])
 @login_required
 def assign_cover(leave_request_id):
-    leave_request = db.get_or_404(LeaveRequest, leave_request_id)
-
     form = CoverAssignmentForm()
-    available_teachers = get_available_teachers_for_cover(leave_request)
-    form.cover_teacher_id.choices = [(teacher.id, teacher.full_name) for teacher in available_teachers]
-
+    leave_request = LeaveRequest.query.get_or_404(leave_request_id)
     if form.validate_on_submit():
-        for slot in leave_request.teaching_slots:
-            cover_teacher_id = request.form.get(f'cover_teacher_{slot.period_number}')
-            if cover_teacher_id:
+        for slot_id, teacher_id in request.form.items():
+            if slot_id.startswith('slot_'):
                 cover_assignment = CoverAssignment(
-                    leave_request_id=leave_request.id,
-                    teaching_slot_id=slot.id,
-                    cover_teacher_id=cover_teacher_id
+                    absent_teacher_id=leave_request.requesting_user.id,
+                    covering_teacher_id=int(teacher_id),
+                    teaching_slot_id=int(slot_id.split('_')[1]),
+                    date=leave_request.start_date
                 )
                 db.session.add(cover_assignment)
-
         db.session.commit()
-        flash('Cover assignments created successfully.')
-        return redirect(url_for('view_leave_requests'))
-
-    teaching_slots = get_teaching_slots_by_date_range(
-        leave_request.user_id, leave_request.start_date, leave_request.end_date
-    )
-
-    return render_template('assign_cover.html', leave_request=leave_request,
-                           teaching_slots=teaching_slots,
-                           available_teachers=available_teachers,
-                           form=form)
+        flash("Cover assignments created successfully.", "success")
+        return redirect(url_for('leave_request_detail', leave_request_id=leave_request.id))
+    return render_template('assign_cover.html', form=form, leave_request=leave_request)
 
 
 # View Cover Assignments

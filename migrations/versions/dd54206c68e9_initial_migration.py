@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 1c57682b27bf
+Revision ID: dd54206c68e9
 Revises: 
-Create Date: 2024-10-10 16:25:19.328929
+Create Date: 2024-10-13 22:53:31.004384
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1c57682b27bf'
+revision = 'dd54206c68e9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -40,9 +40,11 @@ def upgrade():
     sa.Column('last_name', sa.String(length=100), nullable=False),
     sa.Column('department_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['department_id'], ['department.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    sa.PrimaryKeyConstraint('id')
     )
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_user_email'), ['email'], unique=True)
+
     op.create_table('leave_request',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -58,8 +60,10 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('lesson_id', sa.Integer(), nullable=False),
     sa.Column('teacher_id', sa.Integer(), nullable=False),
+    sa.Column('leave_request_id', sa.Integer(), nullable=True),
     sa.Column('day_of_week', sa.Integer(), nullable=False),
     sa.Column('period_number', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['leave_request_id'], ['leave_request.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['lesson_id'], ['lesson.id'], ),
     sa.ForeignKeyConstraint(['teacher_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -83,6 +87,9 @@ def downgrade():
     op.drop_table('cover_assignment')
     op.drop_table('teaching_slot')
     op.drop_table('leave_request')
+    with op.batch_alter_table('user', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_user_email'))
+
     op.drop_table('user')
     op.drop_table('lesson')
     op.drop_table('department')
