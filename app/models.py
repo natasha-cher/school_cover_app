@@ -114,10 +114,10 @@ class CoverAssignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     absent_teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     covering_teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    date = db.Column(db.Date, nullable=False)
     teaching_slot_id = db.Column(db.Integer, db.ForeignKey('teaching_slot.id'), nullable=False)
 
-    # Relationships for cover assignments
     absent_teacher = db.relationship('User', foreign_keys=[absent_teacher_id], backref='absences')
     covering_teacher = db.relationship('User', foreign_keys=[covering_teacher_id], backref='covers')
     teaching_slot = db.relationship('TeachingSlot', backref='cover_assignment')
+
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())

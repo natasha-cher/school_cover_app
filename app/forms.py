@@ -31,13 +31,7 @@ class LeaveRequestForm(FlaskForm):
 
 # Cover Assignment Form
 class CoverAssignmentForm(FlaskForm):
-    cover_teacher_id = SelectField('Select Cover Teacher', validators=[DataRequired()])
-    submit = SubmitField('Assign Cover')
-
-    # Set choices for cover teachers
-    def set_cover_teacher_choices(self):
-        self.cover_teacher_id.choices = [(teacher.id, teacher.email) for teacher in
-                                         User.query.filter_by(role='teacher').all()]
+    pass
 
 
 # Sign Up Form

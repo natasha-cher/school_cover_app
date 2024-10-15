@@ -165,6 +165,7 @@ def fetch_slots():
 def assign_cover(leave_request_id):
     form = CoverAssignmentForm()
     leave_request = LeaveRequest.query.get_or_404(leave_request_id)
+
     if form.validate_on_submit():
         for slot_id, teacher_id in request.form.items():
             if slot_id.startswith('slot_'):
@@ -172,7 +173,6 @@ def assign_cover(leave_request_id):
                     absent_teacher_id=leave_request.requesting_user.id,
                     covering_teacher_id=int(teacher_id),
                     teaching_slot_id=int(slot_id.split('_')[1]),
-                    date=leave_request.start_date
                 )
                 db.session.add(cover_assignment)
         db.session.commit()
