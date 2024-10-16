@@ -145,7 +145,6 @@ def fetch_slot_teachers(leave_request_id):
 @login_required
 def assign_cover(leave_request_id):
     leave_request = get_leave_request(leave_request_id)
-
     if not leave_request:
         flash("Leave request not found.", "danger")
         return redirect(url_for('some_error_page'))
@@ -157,14 +156,31 @@ def assign_cover(leave_request_id):
     )
 
     form = CoverAssignmentForm()
+
     slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
 
     populate_slot_forms(form, slot_teacher_mapping)
 
-    slot_details = get_slot_details(teaching_slots, slot_teacher_mapping)
+    slot_details = [
+        {
+            'lesson_name': slot.lesson.name,
+            'subject': slot.lesson.subject,
+            'year_group': slot.lesson.year_group,
+        }
+        for slot in teaching_slots if slot.id in slot_teacher_mapping
+    ]
 
     if form.validate_on_submit():
-        save_cover_assignments(form, leave_request)
+        for slot_form in form.slots:
+            if slot_form.covering_teacher.data:
+                cover_assignment = CoverAssignment(
+                    absent_teacher_id=leave_request.requesting_user.id,
+                    covering_teacher_id=slot_form.covering_teacher.data,
+                    teaching_slot_id=slot_form.slot_id.data
+                )
+                db.session.add(cover_assignment)
+
+        db.session.commit()
         flash("Cover assignments saved successfully!", "success")
         return redirect(url_for('some_success_page'))
 

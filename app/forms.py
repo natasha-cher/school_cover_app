@@ -41,7 +41,6 @@ class CoverAssignmentForm(FlaskForm):
     submit = SubmitField('Assign Cover')
 
     def set_slot_choices(self, slot_teacher_mapping):
-        """Set choices for each slot form based on available teachers."""
         for slot_form in self.slots:
             slot_id = slot_form.slot_id.data  # Get the slot ID from the form.
 

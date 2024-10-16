@@ -13,11 +13,15 @@
             {% for slot_form in form.slots %}
             <div class="form-group mb-4">
                 <label class="font-weight-bold">
-                    {{ slot_details[loop.index0].lesson_name }}
-                    ({{ slot_details[loop.index0].subject }},
-                    Year Group: {{ slot_details[loop.index0].year_group }})
-                    <br>
-                    Absent Teacher: {{ leave_request.requesting_user.full_name }}
+                    {% if loop.index0 < slot_details|length %}
+                        {{ slot_details[loop.index0].lesson_name }}
+                        ({{ slot_details[loop.index0].subject }},
+                        Year Group: {{ slot_details[loop.index0].year_group }})
+                        <br>
+                        Absent Teacher: {{ leave_request.requesting_user.full_name }}
+                    {% else %}
+                        <span class="text-danger">Slot details not available.</span>
+                    {% endif %}
                 </label>
 
                 {{ slot_form.slot_id }}  <!-- Hidden field for slot ID -->
@@ -37,7 +41,7 @@
 
         <div class="text-center mt-4">
             <button type="submit" class="btn btn-primary btn-lg">
-                Assign Covers
+                Assign Cover
             </button>
         </div>
 
