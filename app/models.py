@@ -60,7 +60,6 @@ class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
 
-    # A department can have many users (teachers)
     teachers = db.relationship('User', backref='department', lazy='dynamic')
 
 
@@ -72,7 +71,6 @@ class Lesson(db.Model):
     year_group = db.Column(db.String(50), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
 
-    # A lesson can have many teaching slots
     teaching_slots = db.relationship('TeachingSlot', back_populates='lesson', lazy=True)
 
 
@@ -86,7 +84,6 @@ class TeachingSlot(db.Model):
     day_of_week = db.Column(db.Integer, nullable=False)
     period_number = db.Column(db.Integer, nullable=False)
 
-    # Relationships
     lesson = db.relationship('Lesson', back_populates='teaching_slots')
     teacher = db.relationship('User', back_populates='teaching_slots')
     leave_request = db.relationship('LeaveRequest', back_populates='teaching_slots')
@@ -103,7 +100,6 @@ class LeaveRequest(db.Model):
     status = db.Column(db.String(50), nullable=False)  # 'pending', 'approved', 'declined'
     comment = db.Column(db.Text, nullable=True)
 
-    # Relationships
     requesting_user = db.relationship('User', back_populates='leave_requests')
     teaching_slots = db.relationship('TeachingSlot', back_populates='leave_request', lazy=True)
 

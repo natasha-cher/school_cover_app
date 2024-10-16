@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import SelectField, DateField, TextAreaField, SubmitField, PasswordField, StringField, HiddenField, \
-    BooleanField
+    BooleanField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 from app.models import User, Department
 from flask_login import current_user
@@ -30,8 +30,29 @@ class LeaveRequestForm(FlaskForm):
 
 
 # Cover Assignment Form
+# Slot Form: Stores slot ID and selected covering teacher.
+class SlotForm(FlaskForm):
+    slot_id = HiddenField('Slot ID')  # Hidden field to store the slot ID.
+    covering_teacher = SelectField('Select Cover Teacher', coerce=int, validators=[DataRequired()])
+
+# Cover Assignment Form: Contains multiple SlotForms in a FieldList.
 class CoverAssignmentForm(FlaskForm):
-    pass
+    slots = FieldList(FormField(SlotForm), min_entries=1)
+    submit = SubmitField('Assign Cover')
+
+    def set_slot_choices(self, slot_teacher_mapping):
+        """Set choices for each slot form based on available teachers."""
+        for slot_form in self.slots:
+            slot_id = slot_form.slot_id.data  # Get the slot ID from the form.
+
+            # Ensure slot ID exists in the mapping.
+            if int(slot_id) in slot_teacher_mapping:
+                teachers = slot_teacher_mapping[int(slot_id)]  # Get teachers for this slot.
+
+                # Assign teacher choices to the SelectField.
+                slot_form.covering_teacher.choices = [
+                    (teacher['id'], teacher['name']) for teacher in teachers
+                ]
 
 
 # Sign Up Form
@@ -59,7 +80,6 @@ class SignupForm(FlaskForm):
         # Populate department choices
         self.department_id.choices += [(dept.id, dept.name) for dept in Department.query.all()]
 
-    # Custom validator to check if the email already exists
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         if user:

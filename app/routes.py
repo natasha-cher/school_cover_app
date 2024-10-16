@@ -5,10 +5,13 @@ from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginFo
 from flask_login import login_user, logout_user, current_user, login_required, LoginManager
 from app.helpers import (
     get_all_teachers,
+    get_leave_request,
+    get_slot_teacher_mapping,
     get_teaching_slots_by_date_range,
-    get_available_teachers_for_slot
+    populate_slot_forms,
+    save_cover_assignments,
+    get_slot_details
 )
-from datetime import timedelta
 
 main = Blueprint('main', __name__)
 
@@ -112,7 +115,7 @@ def handle_request(request_id):
         flash('You do not have permission to handle leave requests.', 'danger')
         return redirect(url_for('view_leave_requests'))
 
-    leave_request = LeaveRequest.query.get_or_404(request_id)
+    leave_request = get_leave_request(request_id)
     action = request.form.get('action')
     valid_actions = ['approve', 'decline']
     if action in valid_actions:
@@ -125,60 +128,47 @@ def handle_request(request_id):
     return redirect(url_for('view_leave_requests'))
 
 
-from datetime import datetime
-
-
-@app.route('/fetch-slots', methods=['POST'])
+@app.route('/fetch-slot-teachers/<int:leave_request_id>', methods=['GET'])
 @login_required
-def fetch_slots():
-    data = request.json
-    teacher_id = data.get('teacher_id')
-    start_date_str = data.get('start_date')
-    end_date_str = data.get('end_date')
+def fetch_slot_teachers(leave_request_id):
+    leave_request = get_leave_request(leave_request_id)
 
-    # Convert string dates to datetime.date objects
-    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    if not leave_request:
+        return jsonify({"error": "Leave request not found"}), 404
 
-    slots_to_cover = get_teaching_slots_by_date_range(
-        teacher_id, start_date, end_date
-    )
+    slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
 
-    all_teachers = get_all_teachers()
-    slot_teacher_mapping = {
-        slot.id: {
-            'lesson': slot.lesson.name,
-            'period': slot.period_number,
-            'teachers': [
-                {'id': teacher.id, 'name': teacher.full_name}
-                for teacher in get_available_teachers_for_slot(slot, all_teachers)
-            ]
-        }
-        for slot in slots_to_cover
-    }
     return jsonify(slot_teacher_mapping)
 
 
-# Assign Cover Route
 @app.route('/assign-cover/<int:leave_request_id>', methods=['GET', 'POST'])
 @login_required
 def assign_cover(leave_request_id):
+    leave_request = get_leave_request(leave_request_id)
+
+    if not leave_request:
+        flash("Leave request not found.", "danger")
+        return redirect(url_for('some_error_page'))
+
+    teaching_slots = get_teaching_slots_by_date_range(
+        leave_request.requesting_user.id,
+        leave_request.start_date,
+        leave_request.end_date
+    )
+
     form = CoverAssignmentForm()
-    leave_request = LeaveRequest.query.get_or_404(leave_request_id)
+    slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
+
+    populate_slot_forms(form, slot_teacher_mapping)
+
+    slot_details = get_slot_details(teaching_slots, slot_teacher_mapping)
 
     if form.validate_on_submit():
-        for slot_id, teacher_id in request.form.items():
-            if slot_id.startswith('slot_'):
-                cover_assignment = CoverAssignment(
-                    absent_teacher_id=leave_request.requesting_user.id,
-                    covering_teacher_id=int(teacher_id),
-                    teaching_slot_id=int(slot_id.split('_')[1]),
-                )
-                db.session.add(cover_assignment)
-        db.session.commit()
-        flash("Cover assignments created successfully.", "success")
-        return redirect(url_for('leave_request_detail', leave_request_id=leave_request.id))
-    return render_template('assign_cover.html', form=form, leave_request=leave_request)
+        save_cover_assignments(form, leave_request)
+        flash("Cover assignments saved successfully!", "success")
+        return redirect(url_for('some_success_page'))
+
+    return render_template('assign_cover.html', form=form, leave_request=leave_request, slot_details=slot_details)
 
 
 # View Cover Assignments

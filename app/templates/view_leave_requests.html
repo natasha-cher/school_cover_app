@@ -19,25 +19,27 @@
             </thead>
             <tbody>
             {% if pending_requests %}
-            {% for request in pending_requests %}
-            <tr>
-                <td>{{ request.requesting_user.full_name }}</td>
-                <td>{{ request.start_date }}</td>
-                <td>{{ request.end_date }}</td>
-                <td>{{ request.reason }}</td>
-                <td>{{ request.comment }}</td>
-                <td>
-                    <form action="/handle_request/{{ request.id }}" method="POST" style="display:inline;">
-                        <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
-                        <button type="submit" name="action" value="decline" class="btn btn-danger">Decline</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
+                {% for request in pending_requests %}
+                <tr>
+                    <td>{{ request.requesting_user.full_name }}</td>
+                    <td>{{ request.start_date }}</td>
+                    <td>{{ request.end_date }}</td>
+                    <td>{{ request.reason }}</td>
+                    <td>{{ request.comment }}</td>
+                    <td>
+                        <form action="{{ url_for('handle_request', request_id=request.id) }}" method="POST" style="display:inline;">
+                            <div class="btn-group" role="group">
+                                <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
+                                <button type="submit" name="action" value="decline" class="btn btn-danger">Decline</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
             {% else %}
-            <tr>
-                <td colspan="6" class="text-center">No pending leave requests</td>
-            </tr>
+                <tr>
+                    <td colspan="6" class="text-center">No pending leave requests</td>
+                </tr>
             {% endif %}
             </tbody>
         </table>
@@ -58,24 +60,24 @@
             </thead>
             <tbody>
             {% if approved_requests %}
-            {% for request in approved_requests %}
-            <tr>
-                <td>{{ request.requesting_user.full_name }}</td>
-                <td>{{ request.start_date }}</td>
-                <td>{{ request.end_date }}</td>
-                <td>{{ request.reason }}</td>
-                <td>{{ request.comment }}</td>
-                <td>
-                    <form action="{{ url_for('assign_cover', leave_request_id=request.id) }}" method="POST" style="display:inline;">
-                        <button type="submit" class="btn btn-primary">Assign Cover</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
+                {% for request in approved_requests %}
+                <tr>
+                    <td>{{ request.requesting_user.full_name }}</td>
+                    <td>{{ request.start_date }}</td>
+                    <td>{{ request.end_date }}</td>
+                    <td>{{ request.reason }}</td>
+                    <td>{{ request.comment }}</td>
+                    <td>
+                        <form action="{{ url_for('assign_cover', leave_request_id=request.id) }}" method="GET" style="display:inline;">
+                            <button type="submit" class="btn btn-primary">Assign Cover</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
             {% else %}
-            <tr>
-                <td colspan="6" class="text-center">No approved leave requests</td>
-            </tr>
+                <tr>
+                    <td colspan="6" class="text-center">No approved leave requests</td>
+                </tr>
             {% endif %}
             </tbody>
         </table>
@@ -95,19 +97,19 @@
             </thead>
             <tbody>
             {% if declined_requests %}
-            {% for request in declined_requests %}
-            <tr>
-                <td>{{ request.requesting_user.full_name }}</td>
-                <td>{{ request.start_date }}</td>
-                <td>{{ request.end_date }}</td>
-                <td>{{ request.reason }}</td>
-                <td>{{ request.comment }}</td>
-            </tr>
-            {% endfor %}
+                {% for request in declined_requests %}
+                <tr>
+                    <td>{{ request.requesting_user.full_name }}</td>
+                    <td>{{ request.start_date }}</td>
+                    <td>{{ request.end_date }}</td>
+                    <td>{{ request.reason }}</td>
+                    <td>{{ request.comment }}</td>
+                </tr>
+                {% endfor %}
             {% else %}
-            <tr>
-                <td colspan="5" class="text-center">No declined leave requests</td>
-            </tr>
+                <tr>
+                    <td colspan="5" class="text-center">No declined leave requests</td>
+                </tr>
             {% endif %}
             </tbody>
         </table>

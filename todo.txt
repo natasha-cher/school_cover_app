@@ -1,4 +1,3 @@
 Cover assignment logic. Display a list of all available teachers for each period that needs cover.
 There should be an option to only request leave for a few periods.
 Make an AJAX call to fetch the teacher's TeachingSlot when applying for a leave request so that the teacher can select which periods need to be covered
-Login as a teacher or as admin.

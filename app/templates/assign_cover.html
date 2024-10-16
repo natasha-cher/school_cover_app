@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Assign Cover{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Assign Cover Teachers</h2>
+
+    <form method="POST" id="cover-form" class="mt-4">
+        {{ form.hidden_tag() }}  <!-- CSRF token -->
+
+        <div id="slots-container">
+            {% for slot_form in form.slots %}
+            <div class="form-group mb-4">
+                <label class="font-weight-bold">
+                    {{ slot_details[loop.index0].lesson_name }}
+                    ({{ slot_details[loop.index0].subject }},
+                    Year Group: {{ slot_details[loop.index0].year_group }})
+                    <br>
+                    Absent Teacher: {{ leave_request.requesting_user.full_name }}
+                </label>
+
+                {{ slot_form.slot_id }}  <!-- Hidden field for slot ID -->
+
+                <!-- Covering teacher select field -->
+                {{ slot_form.covering_teacher(class_="form-control", required=True) }}
+                {% if slot_form.covering_teacher.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in slot_form.covering_teacher.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">
+                Assign Covers
+            </button>
+        </div>
+
+        {% if form.errors %}
+        <div class="alert alert-danger mt-4">
+            <ul>
+                {% for field, errors in form.errors.items() %}
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

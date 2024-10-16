@@ -71,74 +71,8 @@
     </div>
 </form>
 
-<!-- Include jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <!-- AJAX script to fetch slots dynamically -->
 <script>
-$(document).ready(function () {
-    $('#end_date').on('change', async function () {
-        const startDate = $('#start_date').val();
-        const endDate = $(this).val();
-        const teacherId = {{ current_user.id }};  // Use Flask's Jinja to inject the teacher ID
-
-        if (startDate && endDate) {
-            try {
-                const response = await fetch('{{ url_for("fetch_slots") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ teacher_id: teacherId, start_date: startDate, end_date: endDate }),
-                });
-
-                const data = await response.json();
-                const periodsContainer = $('#periods-container');
-                periodsContainer.empty();  // Clear previous periods
-
-                if (Object.keys(data).length === 0) {
-                    periodsContainer.append('<p>No teaching slots need coverage for the selected dates.</p>');
-                } else {
-                    periodsContainer.append('<h4>Select Specific Periods:</h4><div><input type="checkbox" id="select-all" /> <label for="select-all">Select All</label></div>');
-                    const table = $('<table class="table table-bordered"><thead><tr><th>Lesson</th><th>Period</th><th>Available Teachers</th></tr></thead><tbody id="slots-table-body"></tbody></table>');
-                    periodsContainer.append(table);
-                    const tableBody = $('#slots-table-body');
-
-                    for (const slotId in data) {
-                        const slot = data[slotId];
-                        const row = `
-                            <tr>
-                                <td>${slot.lesson}</td>
-                                <td>Period ${slot.period}</td>
-                                <td>
-                                    <select name="slot_${slotId}" class="form-control" required>
-                                        <option value="" disabled selected>Select a teacher</option>
-                                        ${slot.teachers.map(teacher => `<option value="${teacher.id}">${teacher.name}</option>`).join('')}
-                                    </select>
-                                </td>
-                            </tr>
-                        `;
-                        tableBody.append(row);
-                    }
-
-                    // Checkbox to select all periods
-                    $('#select-all').change(function() {
-                        const isChecked = $(this).is(':checked');
-                        tableBody.find('tr').each(function() {
-                            const select = $(this).find('select');
-                            select.prop('required', isChecked); // Toggle required based on select-all checkbox
-                        });
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching slots:', error);
-                alert('An error occurred while fetching slots.');
-            }
-        } else {
-            alert('Please select both start and end dates.');
-        }
-    });
-});
 </script>
 
 {% endblock %}
