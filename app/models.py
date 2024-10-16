@@ -67,7 +67,6 @@ class Department(db.Model):
 class Lesson(db.Model):
     __tablename__ = 'lesson'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
     year_group = db.Column(db.String(50), nullable=False)
     subject = db.Column(db.String(100), nullable=False)
 

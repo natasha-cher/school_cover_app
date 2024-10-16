@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from app import db, app
 from app.models import LeaveRequest, CoverAssignment, User
-from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginForm
+from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginForm, SlotForm
 from flask_login import login_user, logout_user, current_user, login_required, LoginManager
 from app.helpers import (
     get_all_teachers,
@@ -145,46 +145,25 @@ def fetch_slot_teachers(leave_request_id):
 @login_required
 def assign_cover(leave_request_id):
     leave_request = get_leave_request(leave_request_id)
-    if not leave_request:
-        flash("Leave request not found.", "danger")
-        return redirect(url_for('some_error_page'))
-
-    teaching_slots = get_teaching_slots_by_date_range(
-        leave_request.requesting_user.id,
-        leave_request.start_date,
-        leave_request.end_date
-    )
-
     form = CoverAssignmentForm()
 
+    # Get the slot-teacher mapping
     slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
 
-    populate_slot_forms(form, slot_teacher_mapping)
+    # Populate the form
+    for slot_id, teachers in slot_teacher_mapping.items():
+        slot_form = SlotForm()
+        slot_form.slot_id.data = slot_id
+        slot_form.covering_teacher.choices = [(t['id'], t['name']) for t in teachers]
+        form.slots.append_entry(slot_form)
 
-    slot_details = [
-        {
-            'lesson_name': slot.lesson.name,
-            'subject': slot.lesson.subject,
-            'year_group': slot.lesson.year_group,
-        }
-        for slot in teaching_slots if slot.id in slot_teacher_mapping
-    ]
-
+    # Handle form submission
     if form.validate_on_submit():
-        for slot_form in form.slots:
-            if slot_form.covering_teacher.data:
-                cover_assignment = CoverAssignment(
-                    absent_teacher_id=leave_request.requesting_user.id,
-                    covering_teacher_id=slot_form.covering_teacher.data,
-                    teaching_slot_id=slot_form.slot_id.data
-                )
-                db.session.add(cover_assignment)
-
-        db.session.commit()
+        save_cover_assignments(form, leave_request)
         flash("Cover assignments saved successfully!", "success")
-        return redirect(url_for('some_success_page'))
+        return redirect(url_for('view_cover_assignments'))
 
-    return render_template('assign_cover.html', form=form, leave_request=leave_request, slot_details=slot_details)
+    return render_template('assign_cover.html', form=form, leave_request=leave_request)
 
 
 # View Cover Assignments
