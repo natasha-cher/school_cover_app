@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: dd54206c68e9
+Revision ID: bb13fc0c0ee0
 Revises: 
-Create Date: 2024-10-13 22:53:31.004384
+Create Date: 2024-10-19 20:12:27.473233
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'dd54206c68e9'
+revision = 'bb13fc0c0ee0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,7 +26,6 @@ def upgrade():
     )
     op.create_table('lesson',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('year_group', sa.String(length=50), nullable=False),
     sa.Column('subject', sa.String(length=100), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -60,6 +59,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('lesson_id', sa.Integer(), nullable=False),
     sa.Column('teacher_id', sa.Integer(), nullable=False),
+    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('leave_request_id', sa.Integer(), nullable=True),
     sa.Column('day_of_week', sa.Integer(), nullable=False),
     sa.Column('period_number', sa.Integer(), nullable=False),
@@ -72,8 +72,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('absent_teacher_id', sa.Integer(), nullable=False),
     sa.Column('covering_teacher_id', sa.Integer(), nullable=False),
-    sa.Column('date', sa.Date(), nullable=False),
     sa.Column('teaching_slot_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['absent_teacher_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['covering_teacher_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['teaching_slot_id'], ['teaching_slot.id'], ),

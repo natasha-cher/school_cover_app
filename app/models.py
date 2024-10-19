@@ -79,6 +79,7 @@ class TeachingSlot(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.Date, nullable=True)
     leave_request_id = db.Column(db.Integer, db.ForeignKey('leave_request.id', ondelete='SET NULL'), nullable=True)
     day_of_week = db.Column(db.Integer, nullable=False)
     period_number = db.Column(db.Integer, nullable=False)

@@ -7,10 +7,9 @@ from app.helpers import (
     get_all_teachers,
     get_leave_request,
     get_slot_teacher_mapping,
-    get_teaching_slots_by_date_range,
-    populate_slot_forms,
     save_cover_assignments,
-    get_slot_details
+    get_slot_details,
+    get_teaching_slots_by_date_range
 )
 
 main = Blueprint('main', __name__)
@@ -137,7 +136,6 @@ def fetch_slot_teachers(leave_request_id):
         return jsonify({"error": "Leave request not found"}), 404
 
     slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
-
     return jsonify(slot_teacher_mapping)
 
 
@@ -147,23 +145,29 @@ def assign_cover(leave_request_id):
     leave_request = get_leave_request(leave_request_id)
     form = CoverAssignmentForm()
 
-    # Get the slot-teacher mapping
     slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
+    slot_details = get_slot_details(
+        get_teaching_slots_by_date_range(
+            leave_request.requesting_user.id,
+            leave_request.start_date,
+            leave_request.end_date
+        ),
+        slot_teacher_mapping
+    )
 
-    # Populate the form
+    # Populate form slots
     for slot_id, teachers in slot_teacher_mapping.items():
         slot_form = SlotForm()
         slot_form.slot_id.data = slot_id
         slot_form.covering_teacher.choices = [(t['id'], t['name']) for t in teachers]
         form.slots.append_entry(slot_form)
 
-    # Handle form submission
     if form.validate_on_submit():
         save_cover_assignments(form, leave_request)
         flash("Cover assignments saved successfully!", "success")
         return redirect(url_for('view_cover_assignments'))
 
-    return render_template('assign_cover.html', form=form, leave_request=leave_request)
+    return render_template('assign_cover.html', form=form, slot_details=slot_details, zip=zip, leave_request=leave_request)
 
 
 # View Cover Assignments
@@ -193,7 +197,7 @@ def sign_up(role):
             user = db.one_or_404(db.select(User).filter_by(email=form.email.data),
                                  description="User with this email does not exist.")
         except:
-            user = None  # Proceed with user creation if the user is not found
+            user = None
 
         if user is None:
             new_user = User(

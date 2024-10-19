@@ -58,16 +58,16 @@ def seed_data():
 
         # Seed Lessons
         lessons = [
-            Lesson(name='Algebra', year_group='Year 10', subject='Mathematics'),
-            Lesson(name='Biology', year_group='Year 11', subject='Science'),
-            Lesson(name='Shakespeare', year_group='Year 12', subject='Literature'),
-            Lesson(name='World History', year_group='Year 10', subject='History'),
-            Lesson(name='Painting Basics', year_group='Year 11', subject='Art'),
-            Lesson(name='Physics', year_group='Year 11', subject='Science'),
-            Lesson(name='Chemistry', year_group='Year 10', subject='Science'),
-            Lesson(name='English Literature', year_group='Year 12', subject='Literature'),
-            Lesson(name='Art History', year_group='Year 11', subject='Art'),
-            Lesson(name='Geometry', year_group='Year 10', subject='Mathematics')
+            Lesson(year_group='Year 10', subject='Mathematics'),
+            Lesson(year_group='Year 11', subject='Science'),
+            Lesson(year_group='Year 12', subject='Literature'),
+            Lesson(year_group='Year 10', subject='History'),
+            Lesson(year_group='Year 11', subject='Art'),
+            Lesson(year_group='Year 11', subject='Science'),
+            Lesson(year_group='Year 10', subject='Science'),
+            Lesson(year_group='Year 12', subject='Literature'),
+            Lesson(year_group='Year 11', subject='Art'),
+            Lesson(year_group='Year 10', subject='Mathematics')
         ]
         db.session.bulk_save_objects(lessons)
 

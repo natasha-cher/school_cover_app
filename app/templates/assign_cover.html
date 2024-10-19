@@ -1,14 +1,17 @@
-{% extends "base.html" %}
+={% extends "base.html" %}
 
 {% block content %}
-<h1>Assign Cover for Leave Request</h1>
+<h2>Assign Cover for {{ leave_request.requesting_user.full_name }} ({{ leave_request.start_date }} - {{ leave_request.end_date }})</h2>
 
-<form method="post">
+<form method="post" class="mt-4">
     {{ form.hidden_tag() }}
-    <table class="table table-bordered">
+
+    {% set current_date = None %}
+    <table class="table table-bordered table-striped">
         <thead>
             <tr>
-                <th>Slot</th>
+                <th>#</th>
+                <th>Date</th>
                 <th>Subject</th>
                 <th>Year Group</th>
                 <th>Cover Teacher</th>
@@ -16,27 +19,36 @@
         </thead>
         <tbody>
             {% for slot_form, slot_detail in zip(form.slots, slot_details) %}
-            <tr>
-                <td>
-                    <!-- Hidden field for slot ID -->
-                    {{ slot_form.slot_id }}
-                    {{ loop.index }}
-                </td>
-                <td>{{ slot_detail['subject'] }}</td>
-                <td>{{ slot_detail['year_group'] }}</td>
-                <td>
-                    <!-- Render the covering teacher select field -->
-                    {{ slot_form.covering_teacher(class="form-control") }}
-                    {% if slot_form.covering_teacher.errors %}
-                        <div class="text-danger">
-                            {{ slot_form.covering_teacher.errors[0] }}
-                        </div>
-                    {% endif %}
-                </td>
-            </tr>
+                {% if current_date != slot_detail['date'] %}
+                    <tr>
+                        <td colspan="5" class="font-weight-bold">
+                            <h4>{{ slot_detail['date'] }}</h4>
+                        </td>
+                    </tr>
+                    {% set current_date = slot_detail['date'] %}
+                {% endif %}
+                <tr>
+                    <td>
+                        {{ loop.index }}
+                    </td>
+                    <td>{{ slot_detail['date'] }}</td>
+                    <td>{{ slot_detail['subject'] }}</td>
+                    <td>{{ slot_detail['year_group'] }}</td>
+                    <td>
+                        {{ slot_form.covering_teacher(class="form-control") }}
+
+                        <!-- Display errors, if any -->
+                        {% if slot_form.covering_teacher.errors %}
+                            <div class="text-danger mt-1">
+                                {{ slot_form.covering_teacher.errors[0] }}
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
-    {{ form.submit(class="btn btn-primary") }}
+
+    <button type="submit" class="btn btn-primary">Save Assignments</button>
 </form>
 {% endblock %}

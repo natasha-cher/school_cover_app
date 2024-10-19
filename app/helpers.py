@@ -15,11 +15,9 @@ def get_leave_request(request_id):
 def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
     teaching_slots = []
 
-    # Iterate over each date in the range
     for single_date in (start_date + timedelta(n) for n in range((end_date - start_date).days + 1)):
         day_of_week = single_date.weekday()  # 0 = Monday, 6 = Sunday
 
-        # Fetch teaching slots for that day
         daily_teaching_slots = TeachingSlot.query.filter_by(
             teacher_id=teacher_id,
             day_of_week=day_of_week
@@ -30,7 +28,6 @@ def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
     return teaching_slots
 
 
-
 def get_available_teachers_for_slot(slot, all_teachers, leave_request):
     available_teachers = []
 
@@ -38,7 +35,6 @@ def get_available_teachers_for_slot(slot, all_teachers, leave_request):
         if teacher.id == leave_request.requesting_user.id:
             continue
 
-        # Check for conflicting slots
         conflicting_slot = TeachingSlot.query.filter_by(
             teacher_id=teacher.id,
             day_of_week=slot.day_of_week,
@@ -96,7 +92,6 @@ def save_cover_assignments(form, leave_request):
         slot_id = slot_form.slot_id.data
         covering_teacher_id = slot_form.covering_teacher.data
 
-        # Check if a covering teacher was selected
         if covering_teacher_id:
             cover_assignment = CoverAssignment(
                 absent_teacher_id=leave_request.requesting_user.id,
