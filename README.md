@@ -15,8 +15,9 @@ This project is currently a work in progress. Future enhancements will include a
 
 ## Tech Stack
 
-- **Backend**: Flask, SQLAlchemy (ORM),WTForms
-- **Frontend**: HTML/CSS, Bootstrap, Jinja templates
+- **Backend**: Flask, SQLAlchemy (ORM), WTForms
+- **Frontend**: HTML/CSS, Bootstrap, Jinja templates, JavaScript
+- **AJAX**: Planned for populating forms asynchronously
 - **Authentication**: Flask-Login
 - **Database**: SQLite or PostgreSQL
 
@@ -71,7 +72,6 @@ The database consists of the following tables:
 
    ```bash
    flask run 
-
 
 ## Seeding the Database
 
