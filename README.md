@@ -15,8 +15,8 @@ This project is currently a work in progress. Future enhancements will include a
 
 ## Tech Stack
 
-- **Backend**: Flask, SQLAlchemy (ORM)
-- **Frontend**: HTML/CSS, Jinja templates
+- **Backend**: Flask, SQLAlchemy (ORM),WTForms
+- **Frontend**: HTML/CSS, Bootstrap, Jinja templates
 - **Authentication**: Flask-Login
 - **Database**: SQLite or PostgreSQL
 
