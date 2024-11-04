@@ -9,7 +9,8 @@ from app.helpers import (
     get_slot_teacher_mapping,
     save_cover_assignments,
     get_slot_details,
-    get_teaching_slots_by_date_range
+    get_teaching_slots_by_date_range,
+    date_range
 )
 
 main = Blueprint('main', __name__)
@@ -143,9 +144,11 @@ def fetch_slot_teachers(leave_request_id):
 @login_required
 def assign_cover(leave_request_id):
     leave_request = get_leave_request(leave_request_id)
-    form = CoverAssignmentForm()
+    date_range_list = date_range(leave_request.start_date, leave_request.end_date)
 
+    form = CoverAssignmentForm()
     slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
+
     slot_details = get_slot_details(
         get_teaching_slots_by_date_range(
             leave_request.requesting_user.id,
@@ -167,7 +170,8 @@ def assign_cover(leave_request_id):
         flash("Cover assignments saved successfully!", "success")
         return redirect(url_for('view_cover_assignments'))
 
-    return render_template('assign_cover.html', form=form, slot_details=slot_details, zip=zip, leave_request=leave_request)
+    return render_template('assign_cover.html', form=form, slot_details=slot_details, date_range=date_range_list,
+                           zip=zip, leave_request=leave_request)
 
 
 # View Cover Assignments

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from app.models import User, TeachingSlot, LeaveRequest, CoverAssignment
 from app import db
 from app.forms import SlotForm
@@ -12,11 +12,17 @@ def get_leave_request(request_id):
     return LeaveRequest.query.get_or_404(request_id)
 
 
+def date_range(start_date, end_date):
+    delta = end_date - start_date  # This works if both are date objects
+    return [start_date + timedelta(days=i) for i in range(delta.days + 1)]
+
+
 def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
     teaching_slots_with_dates = []
+    date_range_list = date_range(start_date, end_date)
 
-    for single_date in (start_date + timedelta(n) for n in range((end_date - start_date).days + 1)):
-        day_of_week = single_date.weekday()  # 0 = Monday, 6 = Sunday
+    for single_date in date_range_list:
+        day_of_week = single_date.weekday()
 
         daily_teaching_slots = TeachingSlot.query.filter_by(
             teacher_id=teacher_id,
