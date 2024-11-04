@@ -13,7 +13,7 @@ def get_leave_request(request_id):
 
 
 def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
-    teaching_slots = []
+    teaching_slots_with_dates = []
 
     for single_date in (start_date + timedelta(n) for n in range((end_date - start_date).days + 1)):
         day_of_week = single_date.weekday()  # 0 = Monday, 6 = Sunday
@@ -23,9 +23,11 @@ def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
             day_of_week=day_of_week
         ).all()
 
-        teaching_slots.extend(daily_teaching_slots)
+        for slot in daily_teaching_slots:
+            slot.date = single_date
+            teaching_slots_with_dates.append(slot)
 
-    return teaching_slots
+    return teaching_slots_with_dates
 
 
 def get_available_teachers_for_slot(slot, all_teachers, leave_request):
