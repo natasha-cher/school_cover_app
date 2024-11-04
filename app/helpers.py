@@ -84,6 +84,8 @@ def get_slot_details(teaching_slots, slot_teacher_mapping):
         {
             'subject': slot.lesson.subject,
             'year_group': slot.lesson.year_group,
+            'date': slot.date,
+            'period_number': slot.period_number
         }
         for slot in teaching_slots if slot.id in slot_teacher_mapping
     ]
