@@ -31,6 +31,8 @@ def get_teaching_slots_by_date_range(teacher_id, start_date, end_date):
 
         for slot in daily_teaching_slots:
             slot.date = single_date
+            slot.subject = slot.lesson.subject
+            slot.year_group = slot.lesson.year_group
             teaching_slots_with_dates.append(slot)
 
     return teaching_slots_with_dates
