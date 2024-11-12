@@ -13,7 +13,7 @@ def get_leave_request(request_id):
 
 
 def date_range(start_date, end_date):
-    delta = end_date - start_date  # This works if both are date objects
+    delta = end_date - start_date
     return [start_date + timedelta(days=i) for i in range(delta.days + 1)]
 
 

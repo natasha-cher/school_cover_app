@@ -3,57 +3,45 @@
 {% block content %}
 <h2>Assign Cover for {{ leave_request.requesting_user.full_name }} ({{ leave_request.start_date }} - {{ leave_request.end_date }})</h2>
 
-<!-- Display teacher information -->
-<div class="mb-4">
-    <h5>Absent Teacher Information:</h5>
-    <p>Name: {{ leave_request.requesting_user.full_name }}</p>
-    <p>Reason for Leave: {{ leave_request.reason }}</p>
-</div>
-
 <form method="post" class="mt-4">
     {{ form.hidden_tag() }}
 
-    {% for current_date in date_range %}
-        <h4 class="font-weight-bold text-center">{{ current_date.strftime('%Y-%m-%d') }}</h4> <!-- Format the date for display -->
+    {% for date in date_range %}
+    <h4>{{ date.strftime('%Y-%m-%d') }}</h4>
 
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Period</th>
-                    <th>Subject</th>
-                    <th>Year Group</th>
-                    <th>Cover Teacher</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% set has_slots = false %}
-                {% for slot_form, slot_detail in zip(form.slots, slot_details) %}
-                    {% if slot_detail['date'].strftime('%Y-%m-%d') == current_date.strftime('%Y-%m-%d') %}
-                        <tr>
-                            <td>{{ slot_detail['period_number'] }}</td>
-                            <td>{{ slot_detail['subject'] }}</td>
-                            <td>{{ slot_detail['year_group'] }}</td>
-                            <td>
-                                {{ slot_form.covering_teacher(class="form-control") }}
-
-                                <!-- Display errors, if any -->
-                                {% if slot_form.covering_teacher.errors %}
-                                    <div class="text-danger mt-1">
-                                        {{ slot_form.covering_teacher.errors[0] }}
-                                    </div>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% set has_slots = true %}
-                    {% endif %}
-                {% endfor %}
-                {% if not has_slots %}
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Period</th>
+                <th>Subject</th>
+                <th>Year Group</th>
+                <th>Cover Teacher</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if teaching_slots_by_date[date] %}
+                {% for slot_form, slot_detail in zip(form.slots, teaching_slots_by_date[date]) %}
                     <tr>
-                        <td colspan="4">No cover needed for this date.</td>
+                        <td>{{ slot_detail.period_number }}</td>
+                        <td>{{ slot_detail.subject }}</td>
+                        <td>{{ slot_detail.year_group }}</td>
+                        <td>
+                            {{ slot_form.covering_teacher(class="form-control") }}
+                            {% if slot_form.covering_teacher.errors %}
+                                <div class="text-danger mt-1">
+                                    {{ slot_form.covering_teacher.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </td>
                     </tr>
-                {% endif %}
-            </tbody>
-        </table>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4">No cover needed for this date.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
     {% endfor %}
 
     <button type="submit" class="btn btn-primary">Save Assignments</button>

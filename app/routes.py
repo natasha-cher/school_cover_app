@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from collections import defaultdict
 from app import db, app
 from app.models import LeaveRequest, CoverAssignment, User
 from app.forms import LeaveRequestForm, CoverAssignmentForm, SignupForm, LoginForm, SlotForm
@@ -149,16 +150,33 @@ def assign_cover(leave_request_id):
     form = CoverAssignmentForm()
     slot_teacher_mapping = get_slot_teacher_mapping(leave_request)
 
-    slot_details = get_slot_details(
-        get_teaching_slots_by_date_range(
-            leave_request.requesting_user.id,
-            leave_request.start_date,
-            leave_request.end_date
-        ),
-        slot_teacher_mapping
+    # Fetch the teaching slots for the teacher requesting leave
+    teaching_slots = get_teaching_slots_by_date_range(
+        leave_request.requesting_user.id,
+        leave_request.start_date,
+        leave_request.end_date
     )
 
-    # Populate form slots
+    # Organize the slots by date, where the date is the key
+    teaching_slots_by_date = defaultdict(list)
+    for slot in teaching_slots:
+        teaching_slots_by_date[slot.date].append(slot)
+
+    # Prepare the slot details for each date in the range
+    slot_details = []
+    for date in date_range_list:
+        if date in teaching_slots_by_date:
+            slot_details.extend(teaching_slots_by_date[date])
+        else:
+            # If no slots need covering for this date, you can insert a placeholder or empty structure
+            slot_details.append({
+                "date": date,
+                "period_number": None,
+                "subject": None,
+                "year_group": None
+            })
+
+    # Populate the cover assignment form slots
     for slot_id, teachers in slot_teacher_mapping.items():
         slot_form = SlotForm()
         slot_form.slot_id.data = slot_id
@@ -170,8 +188,9 @@ def assign_cover(leave_request_id):
         flash("Cover assignments saved successfully!", "success")
         return redirect(url_for('view_cover_assignments'))
 
+    # Pass 'teaching_slots_by_date' and other necessary variables to the template
     return render_template('assign_cover.html', form=form, slot_details=slot_details, date_range=date_range_list,
-                           zip=zip, leave_request=leave_request)
+                           zip=zip, leave_request=leave_request, teaching_slots_by_date=teaching_slots_by_date)
 
 
 # View Cover Assignments
